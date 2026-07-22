@@ -66,79 +66,79 @@
                 </ul>
             </nav>
 
-            <div>
-                <div>
-                    <div></div>
-                    <div>
-                        <span></span>
-                        <span></span>
+            <div class="sidebar-footer">
+                <div class="user-status-card">
+                    <div class="status-indicator online"></div>
+                    <div class="user-info">
+                        <span class="user-name" id="user-display-name">Dev</span>
+                        <span class="user-role">System Operator</span>
                     </div>
                 </div>
             </div>
         </aside>
 
         <!-- DASHBOARD -->
-         <main>
+         <main class="main-content">
 
             <!-- CABEÇALHO DO DASHBOARD -->
-            <header>
-                <div>
-                    <h1>Visão Geral do Sistema</h1>
-                    <p>Bem-vindo. Todos os subsistemas operacionais.</p>
+            <header class="top-bar">
+                <div class="welcome-text">
+                    <h1 class="title">Visão Geral do Sistema</h1>
+                    <p class="subtitle">Bem-vindo. Todos os subsistemas operacionais.</p>
                 </div>
-                <div>
-                    <div>00:00:00</div>
+                <div class="top-bar-actions">
+                    <div class="system-time" id="clock-display">00:00:00</div>
                 </div>
             </header>
 
             <!-- ÁREA DE VISUALIZAÇÃO DINÂMICA -->
-             <section>
+             <section class="dashboard-grid">
 
                 <!-- CARDS DE ESTATÍSTICAS -->
-                <div>
-                    <div>
-                        <div><i></i></div>
-                        <div>
-                            <span>-- h</span>
-                            <span>Horas Estudadas</span>
+                <div class="grid-section stats-row">
+                    <div class="card stat-card" id="stat-estudos">
+                        <div class="card-icon"><i class="ph-bold ph-clock"></i></div>
+                        <div class="card-data">
+                            <span class="stat-value">-- h</span>
+                            <span class="stat-label">Horas Estudadas</span>
                         </div>
                     </div>
 
-                    <div>
-                        <div><i></i></div>
-                        <div>
-                            <span>--</span>
-                            <span>Projetos Ativos</span>
+                    <div class="card stat-card" id="stat-projetos">
+                        <div class="card-icon"><i class="ph-bold ph-git-branch"></i></div>
+                        <div class="card-data">
+                            <span class="stat-valuee">--</span>
+                            <span class="stat-label">Projetos Ativos</span>
                         </div>
                     </div>
 
-                    <div>
-                        <div><i></i></div>
-                        <div>
-                            <span>--%</span>
-                            <span>Metas Concluídas</span>
+                    <div class="card stat-card" id="stat-metas">
+                        <div class="card-icon"><i class="ph-bold ph-trophy"></i></div>
+                        <div class="card-data">
+                            <span class="stat-value">--%</span>
+                            <span class="stat-label">Metas Concluídas</span>
                         </div>
                     </div>
                     
-                    <div>
-                        <div><i></i></div>
-                        <div>
-                            <span>Online</span>
-                            <span>Status do Sistema</span>
+                    <div class="card stat-card" id="stat-status">
+                        <div class="card-icon"><i class="ph-bold ph-pulse"></i></div>
+                        <div class="card-data">
+                            <span class="stat-value text-success">Online</span>
+                            <span class="stat-label">Status do Sistema</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- BLOCO DUPLO COM ATIVIDADES RECENTES E FOCO ATUAL -->
-                <div>
+                <div class="grid-section main-row">
 
                     <!-- CARD GRANDE COM FOCO NO PROJETO EM DESTAQUE -->
-                    <article>
-                        <div>
-                            <h2><i></i>Foco Atual</h2>
-                            <span>Em Desenvolvimento</span>
+                    <article class="card highlight-card">
+                        <div class="card-header">
+                            <h2><i class="ph-bold ph-target"></i>Foco Atual</h2>
+                            <span class="badge badge-purple">Em Desenvolvimento</span>
                         </div>
-                        <div>
+                        <div class="card-body" id="foco-container">
                             <!-- CONTEÚDO INJETADO VIA JS -->
                             <h3>NexusHub 2.0</h3>
                             <p>Reconstrução da arquitetura para modularidade e CSS moderno.</p>
@@ -146,12 +146,12 @@
                     </article>
 
                     <!-- CARD MÉDIO COM METAS DE CURTO PRAZO -->
-                    <article>
-                        <div>
-                            <h2><i></i>Metas da Semana</h2>
+                    <article class="card metas-card">
+                        <div class="card-header">
+                            <h2><i class="ph-bold ph-check-square"></i>Metas da Semana</h2>
                         </div>
-                        <div>
-                            <ul>
+                        <div class="card-body">
+                            <ul class="task-list" id="metas-list">
                                 <!-- LISTA INJETADA VIA JS -->
                             </ul>
                         </div>
