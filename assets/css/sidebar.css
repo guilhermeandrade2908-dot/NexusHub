@@ -1,0 +1,139 @@
+/* === ESTILIZAÇÃO DA SIDEBAR === */
+
+/* CONTAINER PRINCIPAL DA SIDEBAR */
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--bg-tertiary);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem 1rem;
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 100;
+}
+
+/* CABEÇALHO / LOGO */
+.sidebar-header {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--bg-tertiary);
+}
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+}
+
+.brand-logo i {
+    font-size: 1.5rem;
+    color: var(--accent-purple);
+}
+
+.brand-logo span span {
+    color: var(--accent-purple);
+}
+
+/* ESTILIZAÇÃO PARA O MENU DE NAVEGAÇÃO */
+.sidebar-nav {
+    margin-top: 1.5rem;
+    flex: 1;
+}
+
+.sidebar-nav ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all var(--transition-fast);
+}
+
+.sidebar-nav a i {
+    font-size: 1.25rem;
+    transition: transform var(--transition-fast);
+}
+
+/* EFEITOS AO PASSAR O MOUSE (HOVER) */
+.sidebar-nav a:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+}
+
+.sidebar-nav a:hover i {
+    transform: translateX(3px); /* MOVE O ÍCONE LEVEMENTE PARA A DIREITA */
+    color: var(--accent-purple);
+}
+
+/* ITEM SELECIONADO (ATIVO) */
+.sidebar-nav li.active a {
+    color: var(--text-primary);
+    background-color: var(--accent-glow);
+    border-left: 3px solid var(--accent-purple);
+    font-weight: 600;
+}
+
+.sidebar-nav li.active a i {
+    color: var(--accent-purple);
+}
+
+/* FOOTER DA SIDEBAR */
+.sidebar-footer {
+    padding-top: 1rem;
+    border-top: 1px solid var(--bg-tertiary);
+}
+
+.user-status-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.status-indicator.online {
+    background-color: var(--status-online);
+    box-shadow: 0 0 8px var(--status-online);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.user-role {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
