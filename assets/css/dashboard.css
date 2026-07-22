@@ -1,12 +1,20 @@
 /* === ESTILIZAÇÃO DO LAYOUT DO DASHBOARD === */
 
 /* ÁREA DE CONTEÚDO PRINCIPAL (À DIREITA DA SIDEBAR) */
+.system-container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
 .main-content {
     flex: 1; /* OCUPA TODO O ESPAÇO RESTANTE APÓS OS 260PX DA SIDEBAR */
     background-color: var(--bg-primary);
     padding: 2rem;
+    min-height: 100vh;
+    height: 100%;
     overflow-y: auto;
-    height: 100vh;
     display: flex;
     flex-direction: column;
     gap: 2rem;
@@ -90,6 +98,7 @@
 @media (max-width: 768px) {
     .system-container {
         flex-direction: column; /* EMPILHA A SIDEBAR NO TOPO EM CELULARES */
+
     }
 
     .sidebar {

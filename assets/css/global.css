@@ -56,7 +56,7 @@ body {
     min-height: 100vh;
     line-height: 1.6;
     -webkit-font-smoothing: antialisaded; /* SUAVIZA FONTES EM TELAS DE MAC/IOS */
-    overflow: hidden;
+    overflow-x: hidden; /* TRAVA APENAS O SCROLL HORIZONTAL */
 }
 
 /* === ESTILIZAÇÃO DE TIPOGRAFIA === */
