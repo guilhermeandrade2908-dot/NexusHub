@@ -1,11 +1,11 @@
-/* RESET DA PÁGINA */
+/* === RESET DA PÁGINA === */
 *, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* VARIÁVEIS DE ESTILIZAÇÃO */
+/* === VARIÁVEIS DE ESTILIZAÇÃO === */
 :root {
     /* PALETA DE CORES DO TEMA DARK CYBERPUNK */
     --bg-primary: #0d0d0d; /* FUNDO PRINCIPAL */
@@ -40,5 +40,62 @@
     --transition-fast: 0.2s ease; /* TRANSIÇÃO RÁPIDA PARA HOVERS */
     --transition-normal: 0.3s ease; /* TRANSIÇÃO SUAVE PARA NAVEGAÇÃO */
     --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); /* SOMBRA SUAVE PARA PROFUNDIDADE */
+}
 
+/* === ESTILIZAÇÃO PARA A BASE DO PROJETO === */
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+    height: 100%;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialisaded; /* SUAVIZA FONTES EM TELAS DE MAC/IOS */
+    overflow: hidden;
+}
+
+/* === ESTILIZAÇÃO DE TIPOGRAFIA === */
+/* TÍTULOS COM FONTE ORBITRON */
+.title, h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: 0.5px;
+}
+
+/* LINKS SEM SUBLINHADO PADRÃO */
+a {
+    color: inherit;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+/* LISTAS SEM AS BOLINHAS PADRÃO */
+ul, ol {
+    list-style: none;
+}
+
+/* IMAGENS RESPONSIVAS */
+img {
+    max-width: 100%;
+    display: block;
+}
+
+/* TEXTOS */
+.text-success {color: var(--status-online);}
+.text-warning {color: var(--status-warning);}
+.text-danger {color: var(--status-offline);}
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* CONTAINER PRINCIPAL DO PROJETO */
+.system-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
 }
