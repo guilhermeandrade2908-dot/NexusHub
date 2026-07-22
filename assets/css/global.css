@@ -1,0 +1,44 @@
+/* RESET DA PÁGINA */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* VARIÁVEIS DE ESTILIZAÇÃO */
+:root {
+    /* PALETA DE CORES DO TEMA DARK CYBERPUNK */
+    --bg-primary: #0d0d0d; /* FUNDO PRINCIPAL */
+    --bg-secondary: #16161a; /* FUNDO DOS CARDS, SIDEBAR E PAINÉIS */
+    --bg-tertiary: #242429; /* FUNDO DE HOVERS, INPUTS E BORDAS */
+
+    /* CORES DE DESTAQUE */
+    --accent-purple: #8b5cf6; /* ROXO PRINCIPAL PARA OS ELEMENTOS ATIVOS E DESTAQUES */
+    --accent-purple-hover: #7c3aed; /* ROXO MAIS ESCURO PARA HOVERS DOS BOTÕES */
+    --accent-glow: rgba(139, 92, 246, 0.15); /* ROXO MAIS SEMITRANSPARENTE PARA EFEITOS DE ILUMINAÇÃO */
+
+    /* CORES DE TEXTO E STATUS */
+    --text-primary: #fffffe; /* TEXTO PRINCIPAL */
+    --text-secondary: #94a3b8; /* TEXTO SECUNDÁRIO */
+    --text-muted: #64748b; /* TEXTO APAGADO (DATAS, INFORMAÇÕES SECUNDÁRIAS) */
+
+    --status-online: #10b981; /* VERDE PARA STATUS ONLINE E CONCLUÍDO */
+    --status-warning: #f59e0b; /* AMARAELO PARA EM ANDAMENTO */
+    --status-offline: #d40438; /* VERMELHO PARA STATUS OFFLINE E ERROS */
+
+    /* TIPOGRAFIA */
+    --font-display: 'Orbitron', sans-serif; /* TÍTULOS TECNOLÓGICOS E NÚMEROS */
+    --font-body: 'Inter', sans-serif; /* TXTO CORRIDO PARA LEITURA CONFORTÁVEL */
+
+    /* LAYOUT E ESPAÇAMENTOS */
+    --sidebar-width: 260px; /* LARGURA FIXA DA BARRA LATERAL */
+    --radius-sm: 12px; /* ARREDONDAMENTO SUAVE DE BOTÕES E TAGS */
+    --radius-md: 12px; /* ARREDONDAMENTO PADRÃO DE CARDS */
+    --radius-lg: 20px; /* ARREDONDAMENTO DE CONTAINERS MAIORES */
+
+    /* EFEITOS E TRANSIÇÕES */
+    --transition-fast: 0.2s ease; /* TRANSIÇÃO RÁPIDA PARA HOVERS */
+    --transition-normal: 0.3s ease; /* TRANSIÇÃO SUAVE PARA NAVEGAÇÃO */
+    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); /* SOMBRA SUAVE PARA PROFUNDIDADE */
+
+}
