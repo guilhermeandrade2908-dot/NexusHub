@@ -14,6 +14,10 @@
     overflow: hidden;
 }
 
+.card-body {
+    padding-top: 0.5rem;
+}
+
 /* EFEITO AO PASSAR MOUSE (HOVER) */
 .card:hover {
     transform: translateY(-3px); /* ELEVA O CARD SUAVEMENTE */
@@ -63,6 +67,10 @@
     font-size: 1.5rem;
     color: var(--accent-purple);
     flex-shrink: 0; /* IMPEDE O ÍCONE DE ESPREMER SE A TELA DIMINUIR */
+}
+
+.stat-card .card-icon i {
+    line-height: 0;
 }
 
 .stat-card .card-data {
