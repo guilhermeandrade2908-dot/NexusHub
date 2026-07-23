@@ -99,3 +99,12 @@ img {
     min-height: 100vh;
     width: 100%;
 }
+
+/* CLASSES DE VISUALIZAÇÃO */
+.view-section {
+    display: none;
+}
+
+.view-section.active {
+    display: block;
+}
