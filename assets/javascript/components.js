@@ -119,22 +119,29 @@ export function renderProjetosCard(projetos = []) {
         const descricao = escapeHTML(proj?.descricao || '');
         const githubUrl = isSafeUrl(proj?.githubUrl) ? escapeHTML(proj.githubUrl) : null;
 
-        return `<div class="projeto-item card" style="margin-bottom:12px; padding:12px; border: 1px solid #333;">
-                    <div class="projeto-header" style="display:flex; justify-content:space-between;">
-                        <h4>${nome}</h4>
-                        <div>
+        return `<div class="projeto-item card" style="margin-bottom:12px; padding:1.25rem; border: 1px solid var(--bg-tertiary);">
+                    <!-- LINHA 1: TÍTULO, BADGE E AÇÕES -->
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <div style="display:flex; align-items:center; gap: 0.6rem; flex-wrap: wrap;">
+                            <h4 style="margin:0; font-size: 1.1rem; color: var(--text-primary); font-weight: 700;">${nome}</h4>
                             <span class="badge badge-status">${status}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap: 0.25rem; flex-shrink: 0;">
                             <button class="btn-icon btn-edit-projeto" data-idx="${idx}" title="Editar">✏️</button>
                             <button class="btn-icon btn-delete-projeto" data-idx="${idx}" title="Excluir">🗑️</button>
                         </div>
                     </div>
-                    <p class="projeto-desc">${descricao}</p>
-                    ${githubUrl ? `<a href="${githubUrl}" target="_blank" class="link-github">Ver no GitHub ↗</a>` : ''}
+
+                    <!-- LINHA 2: DESCRIÇÃO -->
+                    <p class="projeto-desc" style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.4; margin: 0;">${descricao}</p>
+
+                    <!-- LINHA 3: LINK GITHUB (SE HOUVER) -->
+                    ${githubUrl ? `<a href="${githubUrl}" target="_blank" class="link-github" style="display:inline-block; margin-top:0.75rem; color:var(--accent-purple); font-size:0.85rem;">Ver no GitHub ↗</a>` : ''}
                 </div>`;
     }).join('');
 
     return `<div class="section-projetos">
-                <div class="section-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
                     <h3>Projetos</h3>
                     <button id="btn-add-projeto" class="btn-icon" title="Novo Projeto">➕</button>
                 </div>
