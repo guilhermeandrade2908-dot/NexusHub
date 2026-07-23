@@ -127,3 +127,35 @@ export function renderMetasCard(metas) {
                     </div>
                 </div>`;
 }
+
+// FUNÇÃO QUE RENDERIZA O MÓDULO DE LAZER (JOGOS, LIVROS, FILMES, ETC):
+export function renderLazerCard() {
+    const jogos = lazer.jogos || [];
+    const livros = lazer.livros || [];
+    const filmes = lazer.filmes || [];
+
+    const jogosHTML = jogos.map(j => `<li>🎮 <strong>${j.titulo}</strong> <span class="sub-info">(${j.plataforma})</span></li>`).join('');
+    const livrosHTML = livros.map(l => `<li>📖 <strong>${l.titulo}</strong> <span class="sub-info">- ${l.progresso}</span></li>`).join('');
+    const filmesHTML = filmes.map(f => `<li>🎬 <strong>${f.titulo}</strong> <span class="sub-info">(${f.genero}) -${f.status}</span></li>`).join('');
+
+    return `<div class="card card-lazer">
+                <div class="card-header">
+                    <h3>Lazer & Mídia</h3>
+                    <button id="btn-add-lazer" class="btn-icon" title="Adicionar Mídia">➕</button>
+                </div>
+                <div class="card-body lazer-grid">
+                    <div class="lazer-col">
+                        <h5>Jogos</h5>
+                        <ul>${jogosHTML || '<li class="empty-item">Nenhum jogo cadastrado.</li>'}</ul>
+                    </div>
+                    <div class="lazer-col">
+                        <h5>Livros</h5>
+                        <ul>${livrosHTML || '<li class="empty-item">Nenhum livro cadastrado.</li>'}</ul>
+                    </div>
+                    <div class="lazer-col">
+                        <h5>Filmes</5>
+                        <ul>${filmesHTML || '<li class="empty-item">Nenhum filme cadastrado.</li>'}</ul>
+                    </div>
+                </div>
+            </div>`;
+}
