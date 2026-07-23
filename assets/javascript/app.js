@@ -33,7 +33,7 @@ function switchView(viewName) {
     const activeSection = document.getElementById(`view-${viewName}`);
     if (activeSection) {
         activeSection.classList.add('active');
-        activeSection.style.display = 'block';
+        activeSection.style.display = '';
     }
 }
 
