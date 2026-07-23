@@ -70,3 +70,33 @@ export function renderEstudosCard(estudos) {
                 </div>
             </div>`;
 }
+
+// FUNÇÃO QUE RENDERIZA A LISTA DE PROJETOS
+export function renderProjetosCard() {
+    const projetosList = Array.isArray(projetos) ? projetos : [];
+
+    const projetosHTML = projetosList.map(proj => {
+        const techs = Array.isArray(proj.techs) ? proj.techs : [];
+        const techsHTML = techs.map(t => `<span class="tag-tech">${t}</span>`).join('');
+
+        return `<div class="projeto-item card">
+                    <div class="projeto-header">
+                        <h4>${proj.nome}</h4>
+                        <span class="badge badge-status">${proj.status}</span>
+                    </div>
+                    <p class="projeto-desc">${proj.descricao}<p>
+                    <div class="projeto-techs">${techsHTML}</div>
+                    ${proj.githubUrl ? `<a href="${proj.githubUrl}" target="_blank" rel="noopener" class="link-github">Ver no GitHub ↗</a>` : ''}
+                </div>`;
+            }).join('');
+        
+        return `<div class="section-projetos">
+                    <div class="section-header">
+                        <h3>Projetos</h3>
+                        <button id="btn-add-projeto" class="btn-icon" title="Novo Projeto">➕</button>
+                    </div>
+                    <div class="projetos-grid">
+                        ${projetosHTML.length > 0 ? projetosHTML : '<p class="empty-msg">Nenhum projeto cadastrado.</p>'}
+                    </div>
+                </div>`;
+}
