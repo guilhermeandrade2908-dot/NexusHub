@@ -49,7 +49,8 @@
     color: var(--accent-purple);
     background-color: var(--bg-secondary);
     padding: 0.6rem 1.2rem;
-    border-radius: 1px solid rgba(139, 92, 246, 0.05);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(139, 92, 246, 0.05);
     box-shadow: inset 0 0 10px rgba(139, 92, 246, 0.05);
     letter-spacing: 1px;
 }
@@ -59,6 +60,7 @@
     display: flex;
     flex-direction: column;
     gap: 1.75rem;
+    width: 100%;
 }
 
 /* CARDS DE ESTATÍSTICAS */
@@ -68,14 +70,71 @@
     gap: 1.25rem;
 }
 
+.stat-card {
+    height: 100%;
+    margin: 0 !important;
+    align-self: stretch;
+}
+
 /* BLOCO PRINCIPAL (FOCO ATUAL + METAS) */
 .main-row {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
     gap: 1.25rem;
+    align-items: stretch;
+}
+
+.main-row .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0 !important;
+    top: 0 !important;
+}
+
+.main-row .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ESTRUTURA DE PROJETOS EM GRID */
+.projetos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+
+/* AJUSTES DAS CAIXAS DE ESTATÍSTICAS DE ESTUDOS */
+.estudos-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.stat-box {
+    background-color: var(--bg-tertiary);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.stat-box strong {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    display: block;
 }
 
 /* AJUSTE INTERNO DO CARD DE FOCO */
+.highlight-card, .main-row {
+    margin-top: 0;
+    position: relative;
+    z-index: 1;
+}
+
 .highlight-card .card-body h3 {
     font-size: 1.3rem;
     color: var(--text-primary);
@@ -86,6 +145,27 @@
     color: var(--text-secondary);
     font-size: 0.95rem;
     line-height: 1.5;
+}
+
+/* ESTRUTURA DA SEÇÃO DASHBOARD */
+#view-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* CONTAINER DOS CARDS DINÂMICOS */
+#foco-container, #metas-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+#foco-container .card, #metas-container .card {
+    height: 100%;
+    margin: 0;
+    flex: 1;
 }
 
 /* ===  RESPONSIVIDADE PARA TELAS MENORES / TABLETS === */
@@ -116,5 +196,9 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
+    }
+
+    .lazer-grid {
+        grid-template-columns: 1fr !important;
     }
 }

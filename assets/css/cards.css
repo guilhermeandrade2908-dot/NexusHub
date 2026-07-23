@@ -35,7 +35,7 @@
     border-bottom: 1px solid var(--bg-tertiary);
 }
 
-.card-header h2 {
+.card-header h2, .card-header h3 {
     font-size: 1.1rem;
     color: var(--text-primary);
     display: flex;
@@ -43,7 +43,7 @@
     gap: 0.5rem;
 }
 
-.card-header h2 i {
+.card-header h2 i, .card-header h3 i {
     color: var(--accent-purple);
 }
 
@@ -94,28 +94,52 @@
 
 /* TAGS DE CATEGORIA / STATUS */
 .badge {
+    display: inline-block;
     padding: 0.25rem 0.6rem;
     border-radius: 20px;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    align-self: flex-start;
+    width: fit-content;
 }
 
-.badge-purple {
+.badge-purple, .badge-accent, .badge-status {
     background-color: var(--accent-glow);
     color: var(--accent-purple);
     border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
+/* ESTILIZAÇÃO DOS BOTÕES DE ACÃO (LÁPIS, LIXEIRA, ADICIONAR, ETC) */
+.btn-icon {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    transform: scale(1.1);
+}
+
 /* LISTA DE METAS / TAREFAS DENTRO DOS CARDS */
-.task-list {
+.task-list, .materias-list, .metas-list {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
 
-.task-item {
+.task-item, .materia-item, .meta-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -127,7 +151,7 @@
     transition: background-color var(--transition-fast);
 }
 
-.task-item:hover {
+.task-item:hover, .materia-item:hover, .meta-item:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
