@@ -43,7 +43,7 @@ export function loadSystemData() {
 // SALVA TODO O OBJETO DE DADOS DA APLICAÇÃO DE VOLTA NO LOCALSTORAGE:
 export function saveSystemData(data) {
     try {
-        localStorage,setItem(STORAGE_KEY, JSON.stringify(data));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (error) {
         console.error("Erro ao salvar no LocalStorage:", error);
     }
