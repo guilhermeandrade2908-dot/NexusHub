@@ -27,7 +27,7 @@
             <div class="sidebar-header">
                 <div class="brand-logo">
                     <i class="ph-bold ph-cpu"></i>
-                    <span>NEXUS<span>HUB</span>
+                    <span>NEXUS</span><span>HUB</span>
                 </div>
             </div>
 
@@ -76,11 +76,8 @@
                 </div>
             </div>
         </aside>
-
-        <!-- DASHBOARD -->
-         <main class="main-content">
-
-            <!-- CABEÇALHO DO DASHBOARD -->
+    
+        <main class="main-content">
             <header class="top-bar">
                 <div class="welcome-text">
                     <h1 class="title">Visão Geral do Sistema</h1>
@@ -91,10 +88,8 @@
                 </div>
             </header>
 
-            <!-- ÁREA DE VISUALIZAÇÃO DINÂMICA -->
-             <section class="dashboard-grid">
-
-                <!-- CARDS DE ESTATÍSTICAS -->
+            <!-- DASHBOARD (PADRÃO) -->
+            <section id="view-dashboard" class="view-section active">
                 <div class="grid-section stats-row">
                     <div class="card stat-card" id="stat-estudos">
                         <div class="card-icon"><i class="ph-bold ph-clock"></i></div>
@@ -103,15 +98,13 @@
                             <span class="stat-label">Horas Estudadas</span>
                         </div>
                     </div>
-
                     <div class="card stat-card" id="stat-projetos">
                         <div class="card-icon"><i class="ph-bold ph-git-branch"></i></div>
                         <div class="card-data">
-                            <span class="stat-valuee">--</span>
+                            <span class="stat-value">--</span>
                             <span class="stat-label">Projetos Ativos</span>
                         </div>
                     </div>
-
                     <div class="card stat-card" id="stat-metas">
                         <div class="card-icon"><i class="ph-bold ph-trophy"></i></div>
                         <div class="card-data">
@@ -119,7 +112,6 @@
                             <span class="stat-label">Metas Concluídas</span>
                         </div>
                     </div>
-                    
                     <div class="card stat-card" id="stat-status">
                         <div class="card-icon"><i class="ph-bold ph-pulse"></i></div>
                         <div class="card-data">
@@ -129,37 +121,33 @@
                     </div>
                 </div>
 
-                <!-- BLOCO DUPLO COM ATIVIDADES RECENTES E FOCO ATUAL -->
                 <div class="grid-section main-row">
-
-                    <!-- CARD GRANDE COM FOCO NO PROJETO EM DESTAQUE -->
-                    <article class="card highlight-card">
-                        <div class="card-header">
-                            <h2><i class="ph-bold ph-target"></i>Foco Atual</h2>
-                            <span class="badge badge-purple">Em Desenvolvimento</span>
-                        </div>
-                        <div class="card-body" id="foco-container">
-                            <!-- CONTEÚDO INJETADO VIA JS -->
-                            <h3>NexusHub 2.0</h3>
-                            <p>Reconstrução da arquitetura para modularidade e CSS moderno.</p>
-                        </div>
-                    </article>
-
-                    <!-- CARD MÉDIO COM METAS DE CURTO PRAZO -->
-                    <article class="card metas-card">
-                        <div class="card-header">
-                            <h2><i class="ph-bold ph-check-square"></i>Metas da Semana</h2>
-                        </div>
-                        <div class="card-body">
-                            <ul class="task-list" id="metas-list">
-                                <!-- LISTA INJETADA VIA JS -->
-                            </ul>
-                        </div>
-                    </article>
+                    <div id="foco-container"></div>
+                    <div id="metas-container"></div>
                 </div>
-             </section>
-         </main>
-    </div>
+            </section>
+
+            <!-- ESTUDOS -->
+            <section id="view-estudos" class="view-section">
+                <div id="estudos-container"></div>
+            </section>
+
+            <!-- PROJETOS -->
+            <section id="view-projetos" class="view-section">
+                <div id="projetos-container"></div>
+            </section>
+
+            <!-- LAZER -->
+            <section id="view-lazer" class="view-section">
+                <div id="lazer-container"></div>
+            </section>
+
+            <!-- PERFIL -->
+            <section id="view-perfil" class="view-section">
+                <div id="perfil-container"></div>
+            </section>
+        </main>
+</div>
 
     <!-- SCRIPTS MODULARIZADOS -->
     <script type="module" src="assets/javascript/app.js"></script>
