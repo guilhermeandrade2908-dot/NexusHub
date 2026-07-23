@@ -100,3 +100,30 @@ export function renderProjetosCard() {
                     </div>
                 </div>`;
 }
+
+// FUNÇÃO QUE RENDERIZA A CHECKLIST DE METAS
+export function renderMetasCard(metas) {
+    const metasList = Array.isArray(metas) ? metas : [];
+
+    const metasHTML = metasList.map(meta => `
+        <li class="meta-item ${meta.concluida ? 'meta-done' : ''}">
+            <label class="checkbox-container">
+                <input type="checkbox" data-meta-id="${meta.id}" ${meta.concluida ? 'checked' : ''}>
+                <span class="checkmark"></span>
+                <span class="meta-texto">${meta.texto}</span>
+            </label>
+            <button class="btn-icon btn-delete-meta" data-meta-id="${meta.id}" title="Excluir">🗑️</button>
+        </li>`).join('');
+
+        return `<div class="card card-metas">
+                    <div class="card-header">
+                        <h3>Metas da Semana</h3>
+                        <button id="btn-meta-add" class="btn-icon" title="Adicionar Meta">➕</button>
+                    </div>
+                    <div class="card-body">
+                        <ul class="metas-list">
+                            ${metasHTML.length > 0 ? metasHTML : '<p class="empty-msg">Nenhuma meta adicionada.</p>'}
+                        </ul>
+                    </div>
+                </div>`;
+}
