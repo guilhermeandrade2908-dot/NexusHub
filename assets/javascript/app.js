@@ -182,13 +182,23 @@ function attachEventListeners() {
 
         const btnEditProj = target.closest('.btn-edit-projeto');
         if (btnEditProj) {
-            const idx = btnEditProj.getAttribute('data-idx');
+            const idx = Number(btnEditProj.getAttribute('data-idx'));
             const proj = state.projetos[idx];
             const nome = prompt('Nome do Projeto:', proj.nome);
             const descricao = prompt('Descrição:', proj.descricao);
             const status = prompt('Status:', proj.status);
             if (nome) {
-                state.projetos[idx] = { ...proj, nome, descricao, status };
+                const nomeAntigo = proj.nome;
+                state.projetos[idx] = {...proj, nome, descricao, status};
+                
+                if (state.perfil?.focoAtual?.titulo === nomeAntigo) {
+                    state.perfil.focoAtual = {
+                        titulo: nome,
+                        descricao: descricao,
+                        statusTag: status
+                    };
+                }
+                
                 saveSystemData(state);
                 renderSystem();
             }
@@ -197,7 +207,13 @@ function attachEventListeners() {
 
         const btnDelProj = target.closest('.btn-delete-projeto');
         if (btnDelProj) {
-            const idx = btnDelProj.getAttribute('data-idx');
+            const idx = Number(btnDelProj.getAttribute('data-idx'));
+            const projDeletado = state.projetos[idx];
+
+            if (projDeletado && state.perfil?.focoAtual?.titulo === projDeletado.nome) {
+                delete state.perfil.focoAtual;
+            }
+
             state.projetos.splice(idx, 1);
             saveSystemData(state);
             renderSystem();
