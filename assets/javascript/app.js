@@ -166,6 +166,34 @@ function attachEventListeners() {
             return;
         }
 
+        if (target.closest('#btn-add-horas')) {
+            const horasAdicionadas = prompt('Quantas horas você estudou hoje?', '1');
+            const numHoras = Number(horasAdicionadas);
+
+            if (!isNaN(numHoras) && numHoras > 0) {
+                if (!state.estudos) state.estudos = {horasTotais : 0};
+                state.estudos.horasTotais = (Number(state.estudos.horasTotais) || 0) + numHoras;
+                saveSystemData(state);
+                renderSystem();
+            }
+            return;
+        }
+
+        if (target.closest('#btn-edit-meta-horas')) {
+            const atual = state.estudos?.metasHorasSemanal || state.estudos?.metasHorasSemanais || 0;
+            const novaMeta = prompt('Defina sua Meta Semanal de horas: ', atual);
+            const numMeta = Number(novaMeta);
+
+            if (!isNaN(numMeta) && numMeta >= 0) {
+                if (!state.estudos) state.estudos = {};
+                state.estudos.metasHorasSemanal = numMeta;
+                state.estudos.metasHorasSemanais = numMeta; // PARA MANTER COMPATIBILIDADE DE CHAVE
+                saveSystemData(state);
+                renderSystem()
+            }
+            return;
+        }
+
         // PROJETOS (ADD / EDIT / DELETE)
         if (target.closest('#btn-add-projeto')) {
             const nome = prompt('Nome do Projeto:');
