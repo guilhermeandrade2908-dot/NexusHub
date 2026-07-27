@@ -74,17 +74,17 @@ export function renderEstudosCard(estudos = {}) {
         const progressoVal = Number(materia?.progresso) || 0;
         const progresso = Math.min(100, Math.max(0, progressoVal));
 
-        return `<li class="materia-item" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+        return `<li class="materia-item" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 6px;">
             <div style="flex-grow: 1; margin-right: 12px;">
-                <div class="materia-info" style="display:flex; justify-content:space-between;">
-                    <span class="materia-nome">${nome}</span>
-                    <span class="materia-progresso-txt">${progresso}%</span>
+                <div class="materia-info" style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                    <span class="materia-nome" style="font-size: 0.9rem;">${nome}</span>
+                    <span class="materia-progresso-txt" style="font-size: 0.85rem; color: #00e5ff; font-weight: bold;">${progresso}%</span>
                 </div>
-                <div class="progress-bar-bg" style="background:#222; height:8px; border-radius:4px; overflow:hidden;">
+                <div class="progress-bar-bg" style="background:#222; height:6px; border-radius:3px; overflow:hidden;">
                     <div class="progress-bar-fill" style="width: ${progresso}%; background:#00e5ff; height:100%;"></div>
                 </div>
             </div>
-            <div>
+            <div style="display: flex; gap: 4px;">
                 <button class="btn-icon btn-edit-materia" data-idx="${idx}" title="Editar">✏️</button>
                 <button class="btn-icon btn-delete-materia" data-idx="${idx}" title="Excluir">🗑️</button>
             </div>
@@ -95,17 +95,38 @@ export function renderEstudosCard(estudos = {}) {
     const metaHoras = Number(estudos.metasHorasSemanais || estudos.metasHorasSemanal) || 0;
 
     return `<div class="card card-estudos">
-                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
                     <h3>Estudos</h3>
                     <button id="btn-add-materia" class="btn-icon" title="Adicionar Matéria">➕</button>
                 </div>
+                
                 <div class="card-body">
-                    <div class="estudos-stats" style="display:flex; gap: 20px; margin-bottom:15px;">
-                        <div class="stat-box"><strong>${horasTotais}h</strong> Horas Totais</div>
-                        <div class="stat-box"><strong>${metaHoras}h</strong> Meta Semanal</div>
+                    <!-- CONTÊINER DOS DOIS CARDS LADO A LADO -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                        
+                        <!-- CARD 1: HORAS TOTAIS -->
+                        <div id="btn-add-horas" style="background: rgba(255, 255, 255, 0.04); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.2s;" title="Clique para adicionar horas estudadas">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="font-size: 1.3rem; color: #00e5ff;">${horasTotais}h</strong>
+                                <span style="font-size: 0.85rem;">➕ Horas</span>
+                            </div>
+                            <span style="font-size: 0.75rem; color: #a0a0a0; display: block; margin-top: 4px;">Horas Totais</span>
+                        </div>
+                        
+                        <!-- CARD 2: META SEMANAL -->
+                        <div id="btn-edit-meta-horas" style="background: rgba(255, 255, 255, 0.04); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.2s;" title="Clique para alterar a meta semanal">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="font-size: 1.3rem; color: #a855f7;">${metaHoras}h</strong>
+                                <span style="font-size: 0.85rem;">✏️ Meta</span>
+                            </div>
+                            <span style="font-size: 0.75rem; color: #a0a0a0; display: block; margin-top: 4px;">Meta Semanal</span>
+                        </div>
+
                     </div>
-                    <ul class="materias-list" style="list-style:none; padding:0;">
-                        ${materiasHTML.length > 0 ? materiasHTML : '<li class="empty-msg">Nenhuma matéria cadastrada.</li>'}
+                    
+                    <h4 style="margin-bottom: 12px; font-size: 0.9rem; color: #ccc;">Disciplinas e Progresso</h4>
+                    <ul class="materias-list" style="list-style: none; padding: 0; margin: 0;">
+                        ${materiasHTML.length > 0 ? materiasHTML : '<li class="empty-msg" style="color: #666; font-size: 0.85rem;">Nenhuma matéria cadastrada.</li>'}
                     </ul>
                 </div>
             </div>`;
