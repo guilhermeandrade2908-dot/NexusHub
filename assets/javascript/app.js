@@ -250,16 +250,42 @@ function attachEventListeners() {
 
         // LAZER (ADD / DELETE)
         if (target.closest('#btn-add-lazer')) {
-            const cat = prompt('Categoria (jogos, livros ou filmes):')?.toLowerCase().trim();
-            if (['jogos', 'livros', 'filmes'].includes(cat)) {
-                const titulo = prompt(`Título do ${cat.slice(0, -1)}:`);
-                const info = prompt('Detalhes/Status:', 'Ativo');
-                if (titulo) {
-                    if (!state.lazer[cat]) state.lazer[cat] = [];
-                    state.lazer[cat].push({ titulo, info });
+            const catOpcoes = '1 - Jogos\n2 - Livros\n3 - Filmes\n4 - Séries';
+            const escolhaCat = prompt(`Escolha a categoria:\n${catOpcoes}`, '1');
+
+            const mapaCategorias = {
+                '1': 'jogos',
+                '2': 'livros',
+                '3': 'filmes',
+                '4': 'series'
+            };
+
+            const catChave = mapaCategorias[escolhaCat?.trim()];
+
+            if (catChave) {
+                const nome = prompt('Nome do item/mídia:');
+                if (nome && nome.trim()) {
+                    const statusOpcoes = '1 - Em Andamento\n2 - Concluído\n3 - Pausado';
+                    const escolhaStatus = prompt(`Status atual:\n${statusOpcoes}`, '1');
+
+                    const statusLimpo = escolhaStatus?.trim();
+                    let statusTxt = 'Em Andamento';
+                    if (escolhaStatus === '2') statusTxt = 'Concluído';
+                    if (escolhaStatus === '3') statusTxt = 'Pausado';
+
+                    if (!state.lazer) state.lazer = {};
+                    if (!Array.isArray(state.lazer[catChave])) state.lazer[catChave] = [];
+
+                    state.lazer[catChave].push({
+                        nome: nome.trim(),
+                        status: statusTxt
+                    });
+
                     saveSystemData(state);
                     renderSystem();
                 }
+            } else if (escolhaCat !== null) {
+                alert('Categoria inválida!');
             }
             return;
         }
@@ -267,10 +293,13 @@ function attachEventListeners() {
         const btnDelLazer = target.closest('.btn-delete-lazer');
         if (btnDelLazer) {
             const cat = btnDelLazer.getAttribute('data-cat');
-            const idx = btnDelLazer.getAttribute('data-idx');
-            state.lazer[cat].splice(idx, 1);
-            saveSystemData(state);
-            renderSystem();
+            const idx = Number(btnDelLazer.getAttribute('data-idx'));
+            
+            if (state.lazer && Array.isArray(state.lazer[cat])) {
+                state.lazer[cat].splice(idx, 1);
+                saveSystemData(state);
+                renderSystem();
+            }
             return;
         }
 

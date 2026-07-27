@@ -210,37 +210,66 @@ export function renderMetasCard(metas = []) {
 
 // RENDER DE LAZER & MÍDIA
 export function renderLazerCard(lazer = {}) {
-    const jogos = Array.isArray(lazer.jogos) ? lazer.jogos : [];
-    const livros = Array.isArray(lazer.livros) ? lazer.livros : [];
-    const filmes = Array.isArray(lazer.filmes) ? lazer.filmes : [];
+    const categorias = [
+        {chave: 'jogos', titulo: 'Jogos', icone: '🎮'},
+        {chave: 'livros', titulo: 'Livros', icone: '📖'},
+        {chave: 'filmes', titulo: 'Filmes', icone: '🎬'},
+        {chave: 'series', titulo: 'Séries', icone: '📺'}
+    ];
 
-    const renderList = (cat, items) => items.map((item, idx) => `
-        <li style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-            <span><strong>${escapeHTML(item.titulo)}</strong> (${escapeHTML(item.info || item.plataforma || item.progresso || item.genero || '')})</span>
-            <div>
-                <button class="btn-icon btn-delete-lazer" data-cat="${cat}" data-idx="${idx}">🗑️</button>
-            </div>
-        </li>
-    `).join('');
+    const colunasHTML = categorias.map(cat => {
+        const itens = Array.isArray(lazer[cat.chave]) ? lazer[cat.chave] : [];
 
-    return `<div class="card card-lazer">
-                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3>Lazer & Mídia</h3>
-                    <button id="btn-add-lazer" class="btn-icon" title="Adicionar Mídia">➕</button>
-                </div>
-                <div class="card-body lazer-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                    <div class="lazer-col">
-                        <h5>🎮 Jogos</h5>
-                        <ul style="list-style:none; padding:0;">${renderList('jogos', jogos) || '<li class="empty-item">Vazio.</li>'}</ul>
+        const listHTML = itens.map((item, idx) => {
+            let nome = '';
+            let status = 'Em Andamento';
+
+            if (typeof item === 'object' && item !== null) {
+                nome = escapeHTML(item.nome || 'Sem nome');
+                status = escapeHTML(item.status || 'Em Andamento');
+            } else {
+                const itemTxt = String(item);
+                if (itemTxt.includes('Ativo')) {
+                    nome = escapeHTML(itemTxt.replace('(Ativo)', '').replace('Ativo', '').trim());
+                    status = 'Em Andamento';
+                } else {
+                    nome = escapeHTML(itemTxt);
+                }
+            }
+            
+            // DEFINIÇÃO DE COR DE STATUS:
+            let statusColor = '#a855f7';
+            if (status.toLowerCase().includes('conclu')) statusColor = '#00e5ff';
+            if (status.toLowerCase().includes('pausd')) statusColor = '#eab308';
+
+            return `<li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; background: rgba(255, 255, 255, 0.02); padding: 6px 8px; border-radius: 4px;">
+                    <div style="display: flex; flex-direction: column; gap: 2px; max-width: 80%;">
+                        <span style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">${nome}</span>
+                        <span style="font-size: 0.68rem; color: ${statusColor}; font-weight: 600; text-transform: uppercase;">${status}</span>
                     </div>
-                    <div class="lazer-col">
-                        <h5>📖 Livros</h5>
-                        <ul style="list-style:none; padding:0;">${renderList('livros', livros) || '<li class="empty-item">Vazio.</li>'}</ul>
+                    <button class="btn-icon btn-delete-lazer" data-cat="${cat.chave}" data-idx="${idx}" title="Excluir" style="font-size: 0.75rem; opacity: 0.7;">🗑️</button>
+                    </li>`;
+        }).join('');
+
+        return `<div class="lazer-column" style="background: rgba(255, 255, 255, 0.02); padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <h4 style="margin-bottom: 8px; font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                        <span>${cat.icone}</span> ${cat.titulo}
+                    </h4>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        ${listHTML.length > 0 ? listHTML : '<li style="color: #555; font-size: 0.75rem; italic">Vazio</li>'}
+                    </ul>
+                </div>`;
+        }).join('');
+
+        return `<div class="card card-lazer">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>Lazer & Mídia</h3>
+                        <button id="btn-add-lazer" class="btn-icon" title="Adicionar Mídia">➕</button>
                     </div>
-                    <div class="lazer-col">
-                        <h5>🎬 Filmes</h5>
-                        <ul style="list-style:none; padding:0;">${renderList('filmes', filmes) || '<li class="empty-item">Vazio.</li>'}</ul>
+                    <div class="card-body">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">
+                            ${colunasHTML}
+                        </div>
                     </div>
-                </div>
-            </div>`;
+                </div>`
 }
