@@ -1,4 +1,4 @@
-// app.js - Controller Geral
+// APP.JS - CONTROLLER GERAL
 
 import { loadSystemData, saveSystemData } from './storage.js';
 import {
@@ -41,7 +41,7 @@ export function renderSystem() {
     const userNameEl = document.getElementById('user-display-name');
     if (userNameEl && state.perfil?.nome) userNameEl.textContent = state.perfil.nome;
 
-    // Stats
+    // STATS
     const statEstudos = document.querySelector('#stat-estudos .stat-value');
     if (statEstudos) statEstudos.textContent = `${state.estudos?.horasTotais || 0} h`;
 
@@ -55,7 +55,7 @@ export function renderSystem() {
         statMetas.textContent = total > 0 ? `${Math.round((concluidas / total) * 100)}%` : '0%';
     }
 
-    // Containers Injetados
+    // CONTAINERS INJETADOS
     const focoEl = document.getElementById('foco-container');
     if (focoEl) focoEl.innerHTML = renderPerfilCard(state.perfil, state.projetos);
 
@@ -87,7 +87,7 @@ function attachEventListeners() {
             return;
         }
 
-        // 🎯 1. ESCOLHER FOCO A PARTIR DOS PROJETOS
+        // ESCOLHER FOCO A PARTIR DOS PROJETOS
         if (target.closest('#btn-select-foco')) {
             const projetos = Array.isArray(state.projetos) ? state.projetos : [];
             if (projetos.length === 0) {
@@ -117,7 +117,7 @@ function attachEventListeners() {
             return;
         }
 
-        // 👤 2. EDITAR PERFIL
+        // EDITAR PERFIL
         if (target.closest('#btn-edit-perfil')) {
             const nome = prompt('Seu Nome:', state.perfil?.nome || '');
             const cargo = prompt('Seu Cargo/Função:', state.perfil?.cargo || '');
@@ -130,7 +130,7 @@ function attachEventListeners() {
             return;
         }
 
-        // 📚 3. ESTUDOS (ADD / EDIT / DELETE)
+        // ESTUDOS (ADD / EDIT / DELETE)
         if (target.closest('#btn-add-materia')) {
             const nome = prompt('Nome da Matéria:');
             if (nome) {
@@ -166,7 +166,7 @@ function attachEventListeners() {
             return;
         }
 
-        // 🚀 4. PROJETOS (ADD / EDIT / DELETE)
+        // PROJETOS (ADD / EDIT / DELETE)
         if (target.closest('#btn-add-projeto')) {
             const nome = prompt('Nome do Projeto:');
             if (nome) {
@@ -220,7 +220,7 @@ function attachEventListeners() {
             return;
         }
 
-        // 🎮 5. LAZER (ADD / DELETE)
+        // LAZER (ADD / DELETE)
         if (target.closest('#btn-add-lazer')) {
             const cat = prompt('Categoria (jogos, livros ou filmes):')?.toLowerCase().trim();
             if (['jogos', 'livros', 'filmes'].includes(cat)) {
@@ -246,7 +246,7 @@ function attachEventListeners() {
             return;
         }
 
-        // 🎯 6. METAS (CHECK / EDIT / DELETE / ADD)
+        // METAS (CHECK / EDIT / DELETE / ADD)
         if (target.closest('#btn-add-meta')) {
             const texto = prompt('Nova Meta:');
             if (texto) {
@@ -293,6 +293,7 @@ function attachEventListeners() {
     });
 }
 
+// INICIALIZADOR DO SISTEMA
 document.addEventListener('DOMContentLoaded', () => {
     startClock();
     renderSystem();
