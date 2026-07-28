@@ -121,6 +121,16 @@
     box-shadow: 0 0 8px var(--status-online);
 }
 
+.status-indicator.warning {
+    background-color: var(--status-warning);
+    box-shadow: 0 0 8px var(--status-warning);
+}
+
+.status-indicator.offline {
+    background-color: var(--status-offline);
+    box-shadow: 0 0 8px var(--status-offline);
+}
+
 .user-info {
     display: flex;
     flex-direction: column;

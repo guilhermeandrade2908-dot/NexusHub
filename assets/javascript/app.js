@@ -7,7 +7,9 @@ import {
     renderEstudosCard,
     renderProjetosCard,
     renderMetasCard,
-    renderLazerCard
+    renderLazerCard,
+    renderStatusCard,
+    renderSidebarProfile
 } from './components.js';
 
 let state = loadSystemData();
@@ -72,7 +74,18 @@ export function renderSystem() {
     if (lazerEl) lazerEl.innerHTML = renderLazerCard(state.lazer);
 
     const perfilEl = document.getElementById('perfil-container');
-    if (perfilEl) perfilEl.innerHTML = renderPerfilPage(state.perfil);
+    if (perfilEl) perfilEl.innerHTML = renderPerfilPage(state.perfil, state.systemStatus);
+
+    // CARDS DE STATUS (COM CHECAGEM DE EXISTÊNCIA)
+    const statusCardEl = document.getElementById('stat-status');
+    if (statusCardEl) {
+        statusCardEl.innerHTML = renderStatusCard(state.systemStatus);
+    }
+
+    const sidebarFooterEl = document.getElementById('sidebar-footer') || document.querySelector('.sidebar-footer');
+    if (sidebarFooterEl) {
+        sidebarFooterEl.innerHTML = renderSidebarProfile(state.perfil, state.systemStatus);
+    }
 }
 
 function attachEventListeners() {
@@ -355,6 +368,22 @@ function attachEventListeners() {
             const meta = state.metas.find(m => String(m.id) === String(id));
             if (meta) {
                 meta.concluida = target.checked;
+                saveSystemData(state);
+                renderSystem();
+            }
+            return;
+        }
+
+        // ALTERAR STATUS DO SISTEMA (ONLINE | AUSENTE | OFFLINE)
+        if (target.closest('#stat-status') || target.closest('#btn-change-status') || target.closest('#user-profile-status')) {
+            const opcao = prompt('Alterar status do sistema\n1 - Online\n2 - Ausente\n3 - Offline', '1');
+
+            let novoStatus = 'Online';
+            if(opcao?.trim() === '2') novoStatus = 'Ausente';
+            if (opcao?.trim() === '3') novoStatus = 'Offline';
+
+            if (opcao !== null) {
+                state.systemStatus = novoStatus;
                 saveSystemData(state);
                 renderSystem();
             }

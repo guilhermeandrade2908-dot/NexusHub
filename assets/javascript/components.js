@@ -38,12 +38,22 @@ export function renderPerfilCard(perfil = {}, projetos = []) {
 }
 
 // RENDER DA PÁGINA COMPLETA DE PERFIL
-export function renderPerfilPage(perfil = {}) {
-    const nome = escapeHTML(perfil.nome || 'Desenvolvedor');
+export function renderPerfilPage(perfil = {}, systemStatus = 'Online') {
+    const nome = escapeHTML(perfil.nome || 'Dev');
     const cargo = escapeHTML(perfil.cargo || 'System Operator');
     const status = escapeHTML(perfil.status || 'Online');
     const bio = escapeHTML(perfil.bio || 'Sem biografia cadastrada.');
     const inicial = nome.charAt(0).toUpperCase();
+
+    // TRATAMENTO DINÂMICO DE STATUS E CORES NO PERFIL
+    const statusTxt = escapeHTML(systemStatus || 'Online');
+    let statusCor = '#10b981';
+
+    if (statusTxt === 'Ausente') {
+        statusCor = '#f59e0b';
+    } else if (statusTxt === 'Offline') {
+        statusCor = '#d40438';
+    }
 
     return `<div class="card card-perfil-full" style="padding: 24px;">
                 <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
@@ -52,7 +62,7 @@ export function renderPerfilPage(perfil = {}) {
                     </div>
                     <div>
                         <h2 style="margin: 0;">${nome}</h2>
-                        <p style="margin: 4px 0; color: #00e5ff;">${cargo} • <span style="color: #00ff88;">${status}</span></p>
+                        <p style="margin: 4px 0; color: #00e5ff;">${cargo} • <span style="color: ${statusCor}; font-weight: 600;">${statusTxt}</span></p>
                     </div>
                 </div>
                 <div style="margin-bottom: 20px;">
@@ -272,4 +282,47 @@ export function renderLazerCard(lazer = {}) {
                         </div>
                     </div>
                 </div>`
+}
+
+// RENDER DO CARD DE STATUS DO SISTEMA NO DASHBOARD
+export function renderStatusCard(systemStatus = 'Online') {
+    const status = escapeHTML(systemStatus);
+
+    let statusClass = 'text-success'; // Verde
+    let statusLabel = 'Online';
+
+    if (status === 'Ausente' || status === 'Warning') {
+        statusClass = 'text-warning'; // Amarelo (ou ajuste a cor via estilo/classe)
+        statusLabel = 'Ausente';
+    } else if (status === 'Offline' || status === 'Focus') {
+        statusClass = 'text-danger'; // Vermelho
+        statusLabel = 'Offline';
+    }
+
+    // Mantém o HTML idêntico ao seu layout original
+    return `<div class="card-icon"><i class="ph-bold ph-pulse"></i></div>
+            <div class="card-data">
+                <span class="stat-value ${statusClass}">${statusLabel}</span>
+                <span class="stat-label">Status do Sistema</span>
+            </div>`;
+}
+
+// RENDER DO PERFIL DA SIDEBAR
+export function renderSidebarProfile(perfil = {}, systemStatus = 'Online') {
+    const nome = escapeHTML(perfil.nome || 'Dev');
+    const cargo = escapeHTML(perfil.cargo || 'System Operator');
+    const status = escapeHTML(systemStatus).toLowerCase();
+
+    // MAPEIA O STATUS PARA A CLASSE CSS EQUIVALENTE:
+    let classeStatus = 'online';
+    if (status === 'ausente' || status === 'warning') classeStatus = 'warning';
+    if (status === 'offline') classeStatus = 'offline';
+
+    return `<div class="user-status-card" id="user-profile-status" style="cursor: pointer;" title="Clique para alterar status">
+        <div class="status-indicator ${classeStatus}"></div>
+        <div class="user-info">
+            <span class="user-name">${nome}</span>
+            <span class="user-role">${cargo}</span>
+        </div>
+    </div>`;
 }
