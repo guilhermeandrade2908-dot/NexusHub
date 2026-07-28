@@ -167,14 +167,27 @@ function attachEventListeners() {
         }
 
         if (target.closest('#btn-add-horas')) {
-            const horasAdicionadas = prompt('Quantas horas você estudou hoje?', '1');
-            const numHoras = Number(horasAdicionadas);
-
-            if (!isNaN(numHoras) && numHoras > 0) {
-                if (!state.estudos) state.estudos = {horasTotais : 0};
-                state.estudos.horasTotais = (Number(state.estudos.horasTotais) || 0) + numHoras;
-                saveSystemData(state);
-                renderSystem();
+            const horasAtuais = Number(state.estudos?.horasTotais) || 0;
+            const opcao = prompt(`Horas Totais atuais: ${horasAtuais}h\nEscolha uma opção:\n1 - Somar horas estudadas hoje\n2 - Redefinir valor total`, '1');
+            
+            if (opcao?.trim() === '1') {
+                const add = prompt('Quantas horas você estudou hoje?', '1');
+                const numAdd = Number(add);
+                if (!isNaN(numAdd) && numAdd > 0) {
+                    if (!state.estudos) state.estudos = {};
+                    state.estudos.horasTotais = horasAtuais + numAdd;
+                    saveSystemData(state);
+                    renderSystem();
+                }
+            } else if (opcao?.trim() === '2') {
+                const novoTotal = prompt('Digite o novo valor total de horas:', horasAtuais);
+                const numTotal = Number(novoTotal);
+                if (!isNaN(numTotal) && numTotal >= 0) {
+                    if (!state.estudos) state.estudos = {};
+                    state.estudos.horasTotais = numTotal;
+                    saveSystemData(state);
+                    renderSystem();
+                }
             }
             return;
         }
