@@ -77,6 +77,7 @@ export function renderPerfilPage(perfil = {}, systemStatus = 'Online') {
 
 // RENDER DE ESTUDOS
 export function renderEstudosCard(estudos = {}) {
+    // MATERIAS:
     const materias = Array.isArray(estudos.materias) ? estudos.materias : [];
 
     const materiasHTML = materias.map((materia, idx) => {
@@ -84,7 +85,7 @@ export function renderEstudosCard(estudos = {}) {
         const progressoVal = Number(materia?.progresso) || 0;
         const progresso = Math.min(100, Math.max(0, progressoVal));
 
-        return `<li class="materia-item" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 6px;">
+        return `<li class="materia-item" style="display:flex; justify-space-between; align-items:center; margin-bottom: 12px; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 6px;">
             <div style="flex-grow: 1; margin-right: 12px;">
                 <div class="materia-info" style="display:flex; justify-content:space-between; margin-bottom: 4px;">
                     <span class="materia-nome" style="font-size: 0.9rem;">${nome}</span>
@@ -101,45 +102,47 @@ export function renderEstudosCard(estudos = {}) {
         </li>`;
     }).join('');
 
+    // CARDS DE HORAS DIARIAS, TOTAIS E META SEMANAL:
+    const horasHoje = Number(estudos.horasHoje) || 0;
     const horasTotais = Number(estudos.horasTotais) || 0;
-    const metaHoras = Number(estudos.metasHorasSemanais || estudos.metasHorasSemanal) || 0;
+    const metaSemanal = Number(estudos.metasHorasSemanal || estudos.metasHorasSemanais) || 0;
 
-    return `<div class="card card-estudos">
-                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
-                    <h3>Estudos</h3>
-                    <button id="btn-add-materia" class="btn-icon" title="Adicionar Matéria">➕</button>
-                </div>
-                
-                <div class="card-body">
-                    <!-- CONTÊINER DOS DOIS CARDS LADO A LADO -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                        
-                        <!-- CARD 1: HORAS TOTAIS -->
-                        <div id="btn-add-horas" style="background: rgba(255, 255, 255, 0.04); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.2s;" title="Clique para adicionar horas estudadas">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <strong style="font-size: 1.3rem; color: #00e5ff;">${horasTotais}h</strong>
-                                <span style="font-size: 0.85rem;">➕ Horas</span>
-                            </div>
-                            <span style="font-size: 0.75rem; color: #a0a0a0; display: block; margin-top: 4px;">Horas Totais</span>
-                        </div>
-                        
-                        <!-- CARD 2: META SEMANAL -->
-                        <div id="btn-edit-meta-horas" style="background: rgba(255, 255, 255, 0.04); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.2s;" title="Clique para alterar a meta semanal">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <strong style="font-size: 1.3rem; color: #a855f7;">${metaHoras}h</strong>
-                                <span style="font-size: 0.85rem;">✏️ Meta</span>
-                            </div>
-                            <span style="font-size: 0.75rem; color: #a0a0a0; display: block; margin-top: 4px;">Meta Semanal</span>
-                        </div>
+    return `
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">📚 Estudos & Matérias</h3>
+            <button id="btn-add-materia" class="btn-icon">➕</button>
+        </div>
 
-                    </div>
-                    
-                    <h4 style="margin-bottom: 12px; font-size: 0.9rem; color: #ccc;">Disciplinas e Progresso</h4>
-                    <ul class="materias-list" style="list-style: none; padding: 0; margin: 0;">
-                        ${materiasHTML.length > 0 ? materiasHTML : '<li class="empty-msg" style="color: #666; font-size: 0.85rem;">Nenhuma matéria cadastrada.</li>'}
-                    </ul>
-                </div>
-            </div>`;
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px;">
+            
+            <!-- 1. HOJE -->
+            <div id="btn-add-horas-hoje" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer;" title="Clique para somar ou redefinir horas de hoje">
+                <span style="display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.7rem; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                    HOJE <span style="font-size: 0.8rem; color: #00e5ff;">✏️</span>
+                </span>
+                <span style="display: block; font-size: 1.25rem; font-weight: 800; color: #00e5ff; margin-top: 4px;">${horasHoje} h</span>
+            </div>
+
+            <!-- 2. TOTAL SEMANAL -->
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px; text-align: center;">
+                <span style="display: block; font-size: 0.7rem; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">TOTAL SEMANAL</span>
+                <span style="display: block; font-size: 1.25rem; font-weight: 800; color: #3b82f6; margin-top: 4px;">${horasTotais} h</span>
+            </div>
+
+            <!-- 3. META SEMANAL -->
+            <div id="btn-edit-meta-horas" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer;" title="Clique para editar meta">
+                <span style="display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.7rem; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                    META SEMANAL <span style="font-size: 0.8rem; color: #22c55e;">✏️</span>
+                </span>
+                <span style="display: block; font-size: 1.25rem; font-weight: 800; color: #22c55e; margin-top: 4px;">${metaSemanal} h</span>
+            </div>
+
+        </div>
+
+        <!-- LISTA DE MATÉRIAS -->
+        <ul style="list-style: none; padding: 0; margin: 0;">
+            ${materiasHTML.length > 0 ? materiasHTML : '<p style="color: #666; font-size: 0.85rem; text-align: center;">Nenhuma matéria cadastrada.</p>'}
+        </ul>`;
 }
 
 // RENDER DE PROJETOS

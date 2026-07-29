@@ -14,6 +14,7 @@ import {
 
 let state = loadSystemData();
 
+// FUNÇÃO QUE INICIA O RELÓGIO:
 function startClock() {
     const clockEl = document.getElementById('clock-display');
     if (!clockEl) return;
@@ -22,6 +23,43 @@ function startClock() {
     setInterval(update, 1000);
 }
 
+// FUNÇÃO QUE CHECA E DÁ O RESET DE HORAS DIARIAS DO SISTEMA:
+function checkAndResetHorasDiarias(state) {
+    if (!state.estudos) state.estudos = {};
+
+    const agora = new Date();
+    const horasAtual = agora.getHours();
+
+    // DETERMINA A DATA DE CICLO DE ESTUDO ATUAL:
+    const dataCiclo = new Date(agora);
+    // SE AINDA NÃO FOR 5H DA MANHÃ, O CICLO ATUAL "PERTENCE" AO DIA DE ONTEM:
+    if (horasAtual < 5) {
+        dataCiclo.setDate(dataCiclo.getDate() - 1);
+    }
+
+    // FORMATA COMO ANO-MES-DIA PARA GUARDAR APENAS O DIA DO CICLO:
+    const cicloString = dataCiclo.toISOString().split('T')[0];
+    const ultimoReset = state.estudos.ultimoReset;
+
+    // SE O CICLO ATUAL FOR DIFERENTE DO ÚLTIMO RESET REGISTRADO, ZERAMOS!
+    if (ultimoReset !== cicloString) {
+        state.estudos.horasHoje = 0;
+        state.estudos.ultimoReset = cicloString;
+        saveSystemData(state);
+    }
+
+    // DETERMINA O RESET SEMANAL
+    const diaDaSemana = dataCiclo.getDay();
+    const ultimoResetSemana = state.estudos.ultimoResetSemana;
+
+    if (diaDaSemana === 1 && ultimoResetSemana !== cicloString) {
+        state.estudos.horasTotais = 0;
+        state.estudos.ultimoResetSemana = cicloString;
+        saveSystemData(state);
+    }
+}
+
+// FUNÇÃO QUE ATUALIZA A MUDANÇA AO CLICAR EM UM ELEMENTO DA SIDEBAR:
 function switchView(viewName) {
     document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
     const activeLink = document.querySelector(`.sidebar-nav a[data-view="${viewName}"]`);
@@ -39,13 +77,14 @@ function switchView(viewName) {
     }
 }
 
+// FUNÇÃO QUE RENDERIZA O SISTEMA
 export function renderSystem() {
     const userNameEl = document.getElementById('user-display-name');
     if (userNameEl && state.perfil?.nome) userNameEl.textContent = state.perfil.nome;
 
     // STATS
     const statEstudos = document.querySelector('#stat-estudos .stat-value');
-    if (statEstudos) statEstudos.textContent = `${state.estudos?.horasTotais || 0} h`;
+    if (statEstudos) statEstudos.textContent = `${state.estudos?.horasHoje || 0} h`;
 
     const statProjetos = document.querySelector('#stat-projetos .stat-value');
     if (statProjetos) statProjetos.textContent = Array.isArray(state.projetos) ? state.projetos.length : 0;
@@ -88,6 +127,7 @@ export function renderSystem() {
     }
 }
 
+// FUNÇÃO QUE "OUVE" OS EVENTOS DOM:
 function attachEventListeners() {
     document.addEventListener('click', (e) => {
         const target = e.target;
@@ -179,29 +219,40 @@ function attachEventListeners() {
             return;
         }
 
-        if (target.closest('#btn-add-horas')) {
-            const horasAtuais = Number(state.estudos?.horasTotais) || 0;
-            const opcao = prompt(`Horas Totais atuais: ${horasAtuais}h\nEscolha uma opção:\n1 - Somar horas estudadas hoje\n2 - Redefinir valor total`, '1');
-            
-            if (opcao?.trim() === '1') {
-                const add = prompt('Quantas horas você estudou hoje?', '1');
-                const numAdd = Number(add);
-                if (!isNaN(numAdd) && numAdd > 0) {
-                    if (!state.estudos) state.estudos = {};
-                    state.estudos.horasTotais = horasAtuais + numAdd;
+        if (target.closest('#btn-add-horas-hoje')) {
+            const horasHoje = Number(state.estudos?.horasHoje) || 0;
+            const horasTotais = Number(state.estudos?.horasTotais) || 0;
+
+            const mensagem = `Estudadas Hoje: ${horasHoje}h | Total Semanal: ${horasTotais}h\n\nEscolha uma opção:\n1 - Somar horas estudadas hoje\n2 - Redefinir horas de HOJE`;
+            const opcao = prompt(mensagem, '1')?.trim();
+
+            if (!opcao) return;
+
+            if (!state.estudos) state.estudos = {};
+
+            if (opcao === '1') {
+                const inputAdd = prompt('Quantas horas você estudou hoje?', '1');
+                const numAdd = Number(inputAdd);
+
+                if (inputAdd !== null && !isNaN(numAdd) && numAdd > 0) {
+                    state.estudos.horasHoje = horasHoje + numAdd;
+                    state.estudos.horasTotais = horasTotais + numAdd;
                     saveSystemData(state);
                     renderSystem();
                 }
-            } else if (opcao?.trim() === '2') {
-                const novoTotal = prompt('Digite o novo valor total de horas:', horasAtuais);
-                const numTotal = Number(novoTotal);
-                if (!isNaN(numTotal) && numTotal >= 0) {
-                    if (!state.estudos) state.estudos = {};
-                    state.estudos.horasTotais = numTotal;
+            } else if (opcao === '2') {
+                const inputHoje = prompt('Digite o novo valor de horas para HOJE:', horasHoje);
+                const numHoje = Number(inputHoje);
+
+                if (inputHoje !== null && !isNaN(numHoje) && numHoje >= 0) {
+                    const diff = numHoje - horasHoje;
+                    state.estudos.horasHoje = numHoje;
+                    state.estudos.horasTotais = Math.max(0, horasTotais + diff);
                     saveSystemData(state);
                     renderSystem();
                 }
             }
+
             return;
         }
 
@@ -430,7 +481,14 @@ function attachEventListeners() {
 
 // INICIALIZADOR DO SISTEMA
 document.addEventListener('DOMContentLoaded', () => {
+    checkAndResetHorasDiarias(state)
     startClock();
     renderSystem();
     attachEventListeners();
+});
+
+// SE O USUÁRIO DEIXAR A ABA ABERTA DE MADRUGADA E VOLTAR PELA MANHÃ, O CICLO RESETA
+window.addEventListener('focus', () => {
+    checkAndResetHorasDiarias(state);
+    renderSystem();
 });
