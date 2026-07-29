@@ -274,7 +274,7 @@ function attachEventListeners() {
             return;
         }
 
-        // LAZER (ADD / DELETE)
+        // LAZER (ADD | EDIT | DELETE)
         if (target.closest('#btn-add-lazer')) {
             const catOpcoes = '1 - Jogos\n2 - Livros\n3 - Filmes\n4 - Séries';
             const escolhaCat = prompt(`Escolha a categoria:\n${catOpcoes}`, '1');
@@ -312,6 +312,42 @@ function attachEventListeners() {
                 }
             } else if (escolhaCat !== null) {
                 alert('Categoria inválida!');
+            }
+            return;
+        }
+        
+        const btnEditLazer = target.closest('.btn-edit-lazer');
+        if (btnEditLazer) {
+            const cat = btnEditLazer.getAttribute('data-cat');
+            const idx = Number(btnEditLazer.getAttribute('data-idx'));
+
+            if (state.lazer && Array.isArray(state.lazer[cat]) && state.lazer[cat][idx]) {
+                const itemAtual = state.lazer[cat][idx];
+
+                // TRATA ITEM ANTIGO (STRING) OU NOVO (OBJETO)
+                const nomeAtual = typeof itemAtual === 'object' ? itemAtual.nome : String(itemAtual);
+                const statusAtual = typeof itemAtual === 'object' ? itemAtual.status : 'Em Andamento';
+
+                const novoNome = prompt('Editar nome da mídia/item:', nomeAtual);
+                if (novoNome && novoNome.trim()) {
+                    const statusOpcoes = '1 - Em Andamento\n2 - Concluído\n3 - Pausado';
+                    const escolhaStatus = prompt(`Status atual: (${statusAtual})\nEscolha o novo status:\n${statusOpcoes}`, '1');
+
+                    const statusLimpado = escolhaStatus?.trim();
+                    let novoStatus = statusAtual;
+                    if (statusLimpado === '1') novoStatus = 'Em Andamento';
+                    if (statusLimpado === '2') novoStatus = 'Concluído';
+                    if (statusLimpado === '3') novoStatus = 'Pausado';
+
+                    // SALVA ATUALIZADO NO FORMATO OBJETO
+                    state.lazer[cat][idx] = {
+                        nome: novoNome.trim(),
+                        status: novoStatus
+                    };
+
+                    saveSystemData(state);
+                    renderSystem();
+                }
             }
             return;
         }

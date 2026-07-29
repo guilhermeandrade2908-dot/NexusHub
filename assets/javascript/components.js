@@ -257,6 +257,7 @@ export function renderLazerCard(lazer = {}) {
                         <span style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">${nome}</span>
                         <span style="font-size: 0.68rem; color: ${statusColor}; font-weight: 600; text-transform: uppercase;">${status}</span>
                     </div>
+                    <button class="btn-icon btn-edit-lazer" data-cat="${cat.chave}" data-idx="${idx}" title="Editar" style="font-size: 0.75rem; opacity: 0.7;">✏️</button>
                     <button class="btn-icon btn-delete-lazer" data-cat="${cat.chave}" data-idx="${idx}" title="Excluir" style="font-size: 0.75rem; opacity: 0.7;">🗑️</button>
                     </li>`;
         }).join('');
