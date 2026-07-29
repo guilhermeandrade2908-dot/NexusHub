@@ -253,12 +253,14 @@ export function renderLazerCard(lazer = {}) {
             if (status.toLowerCase().includes('pausd')) statusColor = '#eab308';
 
             return `<li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; background: rgba(255, 255, 255, 0.02); padding: 6px 8px; border-radius: 4px;">
-                    <div style="display: flex; flex-direction: column; gap: 2px; max-width: 80%;">
-                        <span style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">${nome}</span>
+                    <div style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0;">
+                        <span style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${nome}</span>
                         <span style="font-size: 0.68rem; color: ${statusColor}; font-weight: 600; text-transform: uppercase;">${status}</span>
                     </div>
-                    <button class="btn-icon btn-edit-lazer" data-cat="${cat.chave}" data-idx="${idx}" title="Editar" style="font-size: 0.75rem; opacity: 0.7;">✏️</button>
-                    <button class="btn-icon btn-delete-lazer" data-cat="${cat.chave}" data-idx="${idx}" title="Excluir" style="font-size: 0.75rem; opacity: 0.7;">🗑️</button>
+                    <div style="display: flex; gap: 4px; flex-shrink: 0; align-items: center;">
+                        <button class="btn-icon btn-edit-lazer" data-cat="${cat.chave}" data-idx="${idx}" title="Editar" style="font-size: 0.75rem; opacity: 0.7; cursor: pointer; background: transparent; border: none;">✏️</button>
+                        <button class="btn-icon btn-delete-lazer" data-cat="${cat.chave}" data-idx="${idx}" title="Excluir" style="font-size: 0.75rem; opacity: 0.7; cursor: pointer; background: transparent; border: none;">🗑️</button>
+                    </div>
                     </li>`;
         }).join('');
 
