@@ -1,0 +1,13 @@
+# Pastas de compilação
+bin/
+obj/
+
+# Arquivos do Visual Studio
+.vs/
+
+# Configurações do usuário
+*.user
+*.suo
+
+# Logs
+*.log
