@@ -14,6 +14,99 @@ import {
 
 let state = loadSystemData();
 
+// FUNÇÃO DO MODAL GLOBAL:
+function customModal({title, message = '', defaultValue = '', type='text', options = null, isConfirm = false, isDanger = false}) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('custom-modal-overlay');
+        const titleEl = document.getElementById('modal-title');
+        const bodyEl = document.getElementById('modal-body');
+
+        if (!overlay || !titleEl || !bodyEl) {
+            console.error('Estrutura do modal customizado não encontrada no DOM!');
+            return resolve(null);
+        }
+
+        titleEl.textContent = title;
+
+        const safeDefaultValue = String(defaultValue).replace(/"/g, '&quot;');
+
+        let inputHTML = '';
+
+        if (!isConfirm) {
+            if (options && Array.isArray(options)) {
+                // RENDERIZA UM DROPDOWN / SELECT:
+                const opts = options.map(o => `<option value="${o.value}" ${String(o.value) === String(defaultValue) ? 'selected' : ''}>${o.label}</option>`).join('');
+                inputHTML = `<select id="custom-prompt-input">${opts}</select>`;
+            } else if (type === 'textarea') {
+                // RENDERIZA CAIXA DE TEXTO MULTILINHA:
+                inputHTML = `<textarea id="custom-prompt-input" rows="4">${safeDefaultValue}</textarea>`;
+            } else {
+                // RENDERIZA INPUT PADRÃO:
+                inputHTML = `<input type="${type}" id="custom-prompt-input" value="${safeDefaultValue}">`;
+            }
+        }
+
+        const confirmBtnClass = isDanger ? 'btn-modal-danger' : 'btn-modal-primary';
+        const confirmBtnText = isConfirm ? (isDanger ? 'Sim, Excluir' : 'Confirmar') : 'Confirmar';
+        
+        bodyEl.innerHTML = `${message ? `<p style="color: #ccc; font-size: 0.9rem; margin-top: 0; margin-bottom: 12px; line-height: 1.4;">${message}</p>` : ''}
+                            ${inputHTML}
+                            <div class="modal-actions">
+                                <button id="custom-prompt-cancel" class="btn-modal-secondary">Cancelar</button>
+                                <button id="custom-prompt-ok" class="${confirmBtnClass}">${confirmBtnText}</button>
+                            </div>`;
+        
+        overlay.classList.remove('hidden');
+
+        const input = document.getElementById('custom-prompt-input');
+        const btnOk = document.getElementById('custom-prompt-ok');
+        const btnCancel = document.getElementById('custom-prompt-cancel');
+        const closeBtn = document.getElementById('modal-close-btn');
+
+        if (input) {
+            setTimeout(() => {
+                input.focus();
+                if (input.select && type !== 'number') input.select();
+            }, 50);
+        }
+
+        function cleanUp() {
+            overlay.classList.add('hidden');
+            btnOk.removeEventListener('click', onOk);
+            btnCancel.removeEventListener('click', onCancel);
+            overlay.removeEventListener('click', onOverlayClick);
+            if (closeBtn) closeBtn.removeEventListener('click', onCancel);
+            if (input) input.removeEventListener('keydown', onKeyDown);
+        }
+
+        function onOk() {
+            const val = isConfirm ? true : input.value;
+            cleanUp();
+            resolve(val);
+        }
+
+        function onCancel() {
+            cleanUp();
+            resolve(isConfirm ? false : null);
+        }
+
+        function onOverlayClick(e) {
+            if (e.target === overlay) onCancel();
+        }
+
+        function onKeyDown(e) {
+            if (e.key === 'Enter' && type !== 'textarea') onOk();
+            if (e.key === 'Escape') onCancel();
+        }
+
+        btnOk.addEventListener('click', onOk);
+        btnCancel.addEventListener('click', onCancel);
+        overlay.addEventListener('click', onOverlayClick);
+        if (closeBtn) closeBtn.addEventListener('click', onCancel);
+        if (input) input.addEventListener('keydown', onKeyDown);
+    });
+}
+
 // FUNÇÃO QUE INICIA O RELÓGIO:
 function startClock() {
     const clockEl = document.getElementById('clock-display');
@@ -129,10 +222,10 @@ export function renderSystem() {
 
 // FUNÇÃO QUE "OUVE" OS EVENTOS DOM:
 function attachEventListeners() {
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', async (e) => {
         const target = e.target;
 
-        // Navegação
+        // NAVEGAÇÃO
         const linkNav = target.closest('.sidebar-nav a');
         if (linkNav) {
             e.preventDefault();
@@ -144,78 +237,149 @@ function attachEventListeners() {
         if (target.closest('#btn-select-foco')) {
             const projetos = Array.isArray(state.projetos) ? state.projetos : [];
             if (projetos.length === 0) {
-                alert('Você ainda não tem projetos cadastrados! Crie um em "Projetos" primeiro.');
+                await customModal({
+                    title: 'Aviso',
+                    message: 'Você ainda não tem projetos cadastrados! Crie um na aba "Projetos" primeiro.',
+                    isConfirm: true
+                });
                 return;
             }
 
-            let opcoes = 'Escolha o número do projeto para definir como FOCO:\n';
-            projetos.forEach((p, idx) => {
-                opcoes += `${idx + 1}. ${p.nome}\n`;
+            const opcoes = projetos.map((p, idx) => ({
+                value: String(idx),
+                label: `${p.nome} (${p.status || 'Sem status'})`
+            }));
+
+            const escolha = await customModal({
+                title: 'Escolher Foco Atual',
+                message: 'Selecione o projeto que será seu foco principal:',
+                options: opcoes
             });
-
-            const escolha = prompt(opcoes);
-            const index = Number(escolha) - 1;
-
-            if (!isNaN(index) && projetos[index]) {
-                const proj = projetos[index];
-                if (!state.perfil) state.perfil = {};
-                state.perfil.focoAtual = {
-                    titulo: proj.nome,
-                    descricao: proj.descricao,
-                    statusTag: proj.status
-                };
-                saveSystemData(state);
-                renderSystem();
+            
+            if (escolha !== null && escolha !== undefined) {
+                const proj = projetos[Number(escolha)];
+                if (proj) {
+                    if (!state.perfil) state.perfil = {};
+                    state.perfil.focoAtual = {
+                        titulo: proj.nome,
+                        descricao: proj.descricao,
+                        statusTag: proj.status
+                    };
+                    saveSystemData(state);
+                    renderSystem();
+                }
             }
             return;
         }
 
         // EDITAR PERFIL
         if (target.closest('#btn-edit-perfil')) {
-            const nome = prompt('Seu Nome:', state.perfil?.nome || '');
-            const cargo = prompt('Seu Cargo/Função:', state.perfil?.cargo || '');
-            const bio = prompt('Sua Bio:', state.perfil?.bio || '');
-            if (nome) {
-                state.perfil = { ...state.perfil, nome, cargo, bio };
-                saveSystemData(state);
-                renderSystem();
-            }
+            const nome = await customModal({
+                title: 'Seu Nome',
+                message: 'Digite o seu nome de usuário:',
+                defaultValue: state.perfil?.nome || ''
+            });
+            if (nome === null) return;
+
+            const cargo = await customModal({
+                title: 'Seu Cargo',
+                message: 'Digite sua profissão ou área de atuação:',
+                defaultValue: state.perfil?.cargo || ''
+            });
+            if (cargo === null) return;
+
+            const bio = await customModal({
+                title: 'Sua Bio',
+                message: 'Escreva uma breve apresentação sobre você',
+                defaultValue: state.perfil?.bio || '',
+                type: 'textarea'
+            });
+            if (bio === null) return;
+
+            state.perfil = {...state.perfil, nome, cargo, bio};
+            saveSystemData(state);
+            renderSystem();
             return;
         }
 
         // ESTUDOS (ADD / EDIT / DELETE)
         if (target.closest('#btn-add-materia')) {
-            const nome = prompt('Nome da Matéria:');
-            if (nome) {
-                const progresso = prompt('Progresso (%):', '0');
-                if (!state.estudos.materias) state.estudos.materias = [];
-                state.estudos.materias.push({ nome, progresso: Number(progresso) || 0 });
-                saveSystemData(state);
-                renderSystem();
-            }
+            const nome = await customModal({
+                title: 'Nova Matéria',
+                message: 'Digite o nome da matéria:'
+            });
+            if (!nome?.trim()) return;
+            
+            const progresso = await customModal({
+                title: 'Progresso Inicial',
+                message: `Qual a porcentagem já concluída de "${nome.trim()}"?`,
+                defaultValue: '0',
+                type: 'number'
+            });
+            if (progresso === null) return;
+
+            if (!state.estudos) state.estudos = {};
+            if (!Array.isArray(state.estudos.materias)) state.estudos.materias = [];
+
+            state.estudos.materias.push({
+                nome: nome.trim(),
+                progresso: Math.min(100, Math.max(0, Number(progresso) || 0))
+            });
+
+            saveSystemData(state);
+            renderSystem();
             return;
         }
 
         const btnEditMat = target.closest('.btn-edit-materia');
         if (btnEditMat) {
-            const idx = btnEditMat.getAttribute('data-idx');
-            const mat = state.estudos.materias[idx];
-            const novoNome = prompt('Editar Matéria:', mat.nome);
-            const novoProg = prompt('Editar Progresso (%):', mat.progresso);
-            if (novoNome) {
-                state.estudos.materias[idx] = { nome: novoNome, progresso: Number(novoProg) || 0 };
-                saveSystemData(state);
-                renderSystem();
-            }
+            const idx = Number(btnEditMat.getAttribute('data-idx'));
+            const mat = state.estudos?.materias?.[idx];
+            if (!mat) return;
+
+            const novoNome = await customModal({
+                title: 'Editar Matéria',
+                message: 'Altere o nome da matéria:',
+                defaultValue: mat.nome
+            });
+            if (novoNome === null) return;
+
+            const novoProg = await customModal({
+                title: 'Editar Progresso (%)',
+                message: 'Altere o percentual concluído:',
+                defaultValue: mat.progresso,
+                type: 'number'
+            });
+            if (novoProg === null) return;
+
+            state.estudos.materias[idx] = {
+                nome: novoNome.trim() || mat.nome,
+                progresso: Math.min(100, Math.max(0, Number(novoProg) || 0))
+            };
+
+            saveSystemData(state);
+            renderSystem();
             return;
         }
 
         const btnDelMat = target.closest('.btn-delete-materia');
         if (btnDelMat) {
-            const idx = btnDelMat.getAttribute('data-idx');
-            state.estudos.materias.splice(idx, 1);
-            saveSystemData(state);
-            renderSystem();
+            const idx = Number(btnDelMat.getAttribute('data-idx'));
+            const mat = state.estudos?.materias?.[idx];
+            if (!mat) return;
+
+            const confirmou = await customModal({
+                title: 'Excluir Matéria',
+                message: `Tem certeza que deseja remover a matéria <strong>"${mat.nome}"</strong>?`,
+                isConfirm: true,
+                isDanger: true
+            });
+
+            if (confirmou) {
+                state.estudos.materias.splice(idx, 1);
+                saveSystemData(state);
+                renderSystem();
+            }
             return;
         }
 
@@ -223,15 +387,26 @@ function attachEventListeners() {
             const horasHoje = Number(state.estudos?.horasHoje) || 0;
             const horasTotais = Number(state.estudos?.horasTotais) || 0;
 
-            const mensagem = `Estudadas Hoje: ${horasHoje}h | Total Semanal: ${horasTotais}h\n\nEscolha uma opção:\n1 - Somar horas estudadas hoje\n2 - Redefinir horas de HOJE`;
-            const opcao = prompt(mensagem, '1')?.trim();
+            const opcao = await customModal({
+                title: 'Horas Diárias',
+                message: `<strong>Hoje: ${horasHoje}h</strong> | <strong>Total Semanal: ${horasTotais}h</strong><br>Escolha uma opção:`,
+                options: [
+                    {value: '1', label: '1 - Somar horas estudadas hoje'},
+                    {value: '2', label: '2 - Redefinir horas de Hoje'}
+                ]
+            });
 
             if (!opcao) return;
 
             if (!state.estudos) state.estudos = {};
 
             if (opcao === '1') {
-                const inputAdd = prompt('Quantas horas você estudou hoje?', '1');
+                const inputAdd = await customModal({
+                    title: 'Somar Horas',
+                    message: 'Quantas horas você estudou hoje?',
+                    defaultValue: '1',
+                    type: 'number'
+                });
                 const numAdd = Number(inputAdd);
 
                 if (inputAdd !== null && !isNaN(numAdd) && numAdd > 0) {
@@ -241,7 +416,12 @@ function attachEventListeners() {
                     renderSystem();
                 }
             } else if (opcao === '2') {
-                const inputHoje = prompt('Digite o novo valor de horas para HOJE:', horasHoje);
+                const inputHoje = await customModal({
+                    title: 'Redefinir Horas de Hoje',
+                    message: 'Digite o novo valor total de horas para HOJE:',
+                    defaultValue: horasHoje,
+                    type: 'number'
+                });
                 const numHoje = Number(inputHoje);
 
                 if (inputHoje !== null && !isNaN(numHoje) && numHoje >= 0) {
@@ -252,16 +432,20 @@ function attachEventListeners() {
                     renderSystem();
                 }
             }
-
             return;
         }
 
         if (target.closest('#btn-edit-meta-horas')) {
             const atual = state.estudos?.metasHorasSemanal || state.estudos?.metasHorasSemanais || 0;
-            const novaMeta = prompt('Defina sua Meta Semanal de horas: ', atual);
-            const numMeta = Number(novaMeta);
+            const novaMeta = await customModal({
+                title: 'Meta Semanal de Horas',
+                message: 'Digite a sua nova meta semanal em horas:',
+                defaultValue: atual,
+                type: 'number'
+            });
 
-            if (!isNaN(numMeta) && numMeta >= 0) {
+            const numMeta = Number(novaMeta);
+            if (novaMeta !== null && !isNaN(numMeta) && numMeta >= 0) {
                 if (!state.estudos) state.estudos = {};
                 state.estudos.metasHorasSemanal = numMeta;
                 state.estudos.metasHorasSemanais = numMeta; // PARA MANTER COMPATIBILIDADE DE CHAVE
@@ -273,15 +457,33 @@ function attachEventListeners() {
 
         // PROJETOS (ADD / EDIT / DELETE)
         if (target.closest('#btn-add-projeto')) {
-            const nome = prompt('Nome do Projeto:');
-            if (nome) {
-                const descricao = prompt('Descrição:') || '';
-                const status = prompt('Status:', 'Em Desenvolvimento') || 'Em Desenvolvimento';
-                if (!Array.isArray(state.projetos)) state.projetos = [];
-                state.projetos.push({ id: Date.now().toString(), nome, descricao, status });
-                saveSystemData(state);
-                renderSystem();
-            }
+            const nome = await customModal({
+                title: 'Novo Projeto',
+                message: 'Digite o nome do projeto:',
+            });
+            if (!nome?.trim()) return;
+
+            const descricao = await customModal({
+                title: 'Descrição do Projeto',
+                message: 'Descreva brevemente o projeto:',
+                type: 'textarea'
+            }) || '';
+
+            const status = await customModal({
+                title: 'Status do Projeto',
+                message: 'Selecione o status atual do projeto:',
+                options: [
+                    {value: 'Em Desenvolvimento', label: 'Em Desenvolvimento'},
+                    {value: 'Planejamento', label: 'Planejamento'},
+                    {value: 'Concluído', label: 'Concluído'},
+                    {value: 'Pausado', label: 'Pausado'}
+                ]
+            }) || 'Em Desenvolvimento';
+
+            if (!Array.isArray(state.projetos)) state.projetos = [];
+            state.projetos.push({id: Date.now().toString(), nome: nome.trim(), descricao: descricao.trim(), status});
+            saveSystemData(state);
+            renderSystem();
             return;
         }
 
@@ -289,24 +491,49 @@ function attachEventListeners() {
         if (btnEditProj) {
             const idx = Number(btnEditProj.getAttribute('data-idx'));
             const proj = state.projetos[idx];
-            const nome = prompt('Nome do Projeto:', proj.nome);
-            const descricao = prompt('Descrição:', proj.descricao);
-            const status = prompt('Status:', proj.status);
-            if (nome) {
-                const nomeAntigo = proj.nome;
-                state.projetos[idx] = {...proj, nome, descricao, status};
-                
-                if (state.perfil?.focoAtual?.titulo === nomeAntigo) {
-                    state.perfil.focoAtual = {
-                        titulo: nome,
-                        descricao: descricao,
-                        statusTag: status
-                    };
-                }
-                
-                saveSystemData(state);
-                renderSystem();
+            if (!proj) return;
+
+            const novoNome = await customModal({
+                title: 'Editar Projeto',
+                message: 'Altere o nome do projeto:',
+                defaultValue: proj.nome
+            });
+            if (novoNome === null) return;
+
+            const novaDescricao = await customModal({
+                title: 'Editar Descrição',
+                message: 'Altere a descrição do projeto:',
+                defaultValue: proj.descricao,
+                type: 'textarea'
+            });
+            if (novaDescricao === null) return;
+
+            const novoStatus = await customModal({
+                title: 'Editar Status',
+                message: 'Selecione o novo status:',
+                defaultValue: proj.status,
+                options: [
+                    {value: 'Em Desenvolvimento', label: 'Em Desenvolvimento'},
+                    {value: 'Planejamento', label: 'Planejamento'},
+                    {value: 'Concluído', label: 'Concluído'},
+                    {value: 'Pausado', label: 'Pausado'}
+                ]
+            });
+            if (novoStatus === null) return;
+
+            const nomeAntigo = proj.nome;
+            state.projetos[idx] = {...proj, nome: novoNome.trim() || proj.nome, descricao: descricao.trim(), status};
+
+            if (state.perfil?.focoAtual?.titulo === nomeAntigo) {
+                state.perfil.focoAtual = {
+                    titulo: state.projetos[idx].nome,
+                    descricao: state.projetos[idx].descricao,
+                    statusTag: state.projetos[idx].status
+                };
             }
+
+            saveSystemData(state);
+            renderSystem();
             return;
         }
 
@@ -315,40 +542,56 @@ function attachEventListeners() {
             const idx = Number(btnDelProj.getAttribute('data-idx'));
             const projDeletado = state.projetos[idx];
 
-            if (projDeletado && state.perfil?.focoAtual?.titulo === projDeletado.nome) {
-                delete state.perfil.focoAtual;
-            }
+            if (!projDeletado) return;
 
-            state.projetos.splice(idx, 1);
-            saveSystemData(state);
-            renderSystem();
+            const confirmou = await customModal({
+                title: 'Excluir Projeto',
+                message: `Deseja realmente excluir o projeto <strong>"${projetoDeletado.nome}"</strong>?`,
+                isConfirm: true,
+                isDanger: true
+            });
+
+            if (confirmou) {
+                if (state.perfil?.focoAtual?.titulo === projDeletado.nome) {
+                    delete state.perfil.focoAtual;
+                }
+
+                state.projetos.splice(idx, 1);
+                saveSystemData(state);
+                renderSystem();
+            }
             return;
         }
 
         // LAZER (ADD | EDIT | DELETE)
         if (target.closest('#btn-add-lazer')) {
-            const catOpcoes = '1 - Jogos\n2 - Livros\n3 - Filmes\n4 - Séries';
-            const escolhaCat = prompt(`Escolha a categoria:\n${catOpcoes}`, '1');
-
-            const mapaCategorias = {
-                '1': 'jogos',
-                '2': 'livros',
-                '3': 'filmes',
-                '4': 'series'
-            };
-
-            const catChave = mapaCategorias[escolhaCat?.trim()];
+            const catChave = await customModal({
+                title: 'Adicionar Lazer',
+                message: 'Selecione a categoria da mídia:',
+                options: [
+                    {value: 'jogos', label: 'Jogos'},
+                    {value: 'livros', label: 'Livros'},
+                    {value: 'filmes', label: 'Filmes'},
+                    {value: 'series', label: 'Séries'}
+                ]
+            });
 
             if (catChave) {
-                const nome = prompt('Nome do item/mídia:');
-                if (nome && nome.trim()) {
-                    const statusOpcoes = '1 - Em Andamento\n2 - Concluído\n3 - Pausado';
-                    const escolhaStatus = prompt(`Status atual:\n${statusOpcoes}`, '1');
+                const nome = await customModal({
+                    title: 'Nome do Item',
+                    message: 'Digite o nome da mídia:'
+                });
 
-                    const statusLimpo = escolhaStatus?.trim();
-                    let statusTxt = 'Em Andamento';
-                    if (escolhaStatus === '2') statusTxt = 'Concluído';
-                    if (escolhaStatus === '3') statusTxt = 'Pausado';
+                if (nome && nome.trim()) {
+                    const statusTxt = await customModal({
+                        title: 'Status Inicial',
+                        message:'Qual a situação atual?',
+                        options: [
+                            {value: 'Em Andamento', label: 'Em Andamento'},
+                            {value: 'Concluído', label: 'Concluído'},
+                            {value: 'Pausado', label: 'Pausado'}
+                        ]
+                    }) || 'Em Andamento';
 
                     if (!state.lazer) state.lazer = {};
                     if (!Array.isArray(state.lazer[catChave])) state.lazer[catChave] = [];
@@ -361,8 +604,6 @@ function attachEventListeners() {
                     saveSystemData(state);
                     renderSystem();
                 }
-            } else if (escolhaCat !== null) {
-                alert('Categoria inválida!');
             }
             return;
         }
@@ -379,18 +620,24 @@ function attachEventListeners() {
                 const nomeAtual = typeof itemAtual === 'object' ? itemAtual.nome : String(itemAtual);
                 const statusAtual = typeof itemAtual === 'object' ? itemAtual.status : 'Em Andamento';
 
-                const novoNome = prompt('Editar nome da mídia/item:', nomeAtual);
+                const novoNome = await customModal({
+                    title: 'Editar Item de Lazer',
+                    message: 'Atualize o nome do item:',
+                    defaultValue: nomeAtual
+                });
+
                 if (novoNome && novoNome.trim()) {
-                    const statusOpcoes = '1 - Em Andamento\n2 - Concluído\n3 - Pausado';
-                    const escolhaStatus = prompt(`Status atual: (${statusAtual})\nEscolha o novo status:\n${statusOpcoes}`, '1');
+                    const novoStatus = await customModal({
+                        title: 'Atualizar Status',
+                        message: 'Selecione o novo status:',
+                        defaultValue: statusAtual,
+                        options: [
+                            {value: 'Em Andamento', label: 'Em Andamento'},
+                            {value: 'Concluído', label: 'Concluído'},
+                            {value: 'Pausado', label: 'Pausado'}
+                        ]
+                    }) || satusAtual;
 
-                    const statusLimpado = escolhaStatus?.trim();
-                    let novoStatus = statusAtual;
-                    if (statusLimpado === '1') novoStatus = 'Em Andamento';
-                    if (statusLimpado === '2') novoStatus = 'Concluído';
-                    if (statusLimpado === '3') novoStatus = 'Pausado';
-
-                    // SALVA ATUALIZADO NO FORMATO OBJETO
                     state.lazer[cat][idx] = {
                         nome: novoNome.trim(),
                         status: novoStatus
@@ -408,20 +655,36 @@ function attachEventListeners() {
             const cat = btnDelLazer.getAttribute('data-cat');
             const idx = Number(btnDelLazer.getAttribute('data-idx'));
             
-            if (state.lazer && Array.isArray(state.lazer[cat])) {
-                state.lazer[cat].splice(idx, 1);
-                saveSystemData(state);
-                renderSystem();
+            if (state.lazer && Array.isArray(state.lazer[cat]) && state.lazer[cat][idx]) {
+                    const item = state.lazer[cat][idx];
+                    const itemNome = typeof item === 'object' ? item.nome : String(item);
+
+                    const confirmou = await customModal({
+                        title: 'Remover Item',
+                        message: `Deseja realmente remover o item <strong>"${itemNome}"</strong> da sua lista?`,
+                        isConfirm: true,
+                        isDanger: true
+                    });
+
+                    if (confirmou) {
+                        state.lazer[cat].splice(idx, 1);
+                        saveSystemData(state);
+                        renderSystem();
+                    }
             }
             return;
         }
 
         // METAS (CHECK / EDIT / DELETE / ADD)
         if (target.closest('#btn-add-meta')) {
-            const texto = prompt('Nova Meta:');
-            if (texto) {
+            const texto = await customModal({
+                title: 'Nova Meta',
+                message: 'Digite a descrição da meta:'
+            });
+
+            if (texto && texto.trim()) {
                 if (!Array.isArray(state.metas)) state.metas = [];
-                state.metas.push({ id: Date.now().toString(), texto, concluida: false });
+                state.metas.push({id: Date.now().toString(), texto: texto.trim(), concluida: false});
                 saveSystemData(state);
                 renderSystem();
             }
@@ -432,9 +695,16 @@ function attachEventListeners() {
         if (btnEditMeta) {
             const id = btnEditMeta.getAttribute('data-meta-id');
             const meta = state.metas.find(m => String(m.id) === String(id));
-            const texto = prompt('Editar Meta:', meta.texto);
-            if (texto) {
-                meta.texto = texto;
+            if (!meta) return;
+
+            const texto = await customModal({
+                title: 'Editar Meta',
+                message: 'Altere a descrição da meta:',
+                defaultValue: meta.texto
+            });
+
+            if (texto && texto.trim()) {
+                meta.texto = texto.trim();
                 saveSystemData(state);
                 renderSystem();
             }
@@ -444,9 +714,22 @@ function attachEventListeners() {
         const btnDelMeta = target.closest('.btn-delete-meta');
         if (btnDelMeta) {
             const id = btnDelMeta.getAttribute('data-meta-id');
-            state.metas = state.metas.filter(m => String(m.id) !== String(id));
-            saveSystemData(state);
-            renderSystem();
+            const meta = state.metas?.find(m => String(m.id) === String(id));
+
+            if (!meta) return;
+
+            const confirmou = await customModal({
+                title: 'Excluir Meta',
+                message: `Remover a meta <strong>"${meta.texto}"</strong>?`,
+                isConfirm: true,
+                isDanger: true
+            });
+
+            if (confirmou) {
+                state.metas = state.metas.filter(m => String(m.id) !== String(id));
+                saveSystemData(state);
+                renderSystem();
+            }
             return;
         }
 
@@ -463,13 +746,18 @@ function attachEventListeners() {
 
         // ALTERAR STATUS DO SISTEMA (ONLINE | AUSENTE | OFFLINE)
         if (target.closest('#stat-status') || target.closest('#btn-change-status') || target.closest('#user-profile-status')) {
-            const opcao = prompt('Alterar status do sistema\n1 - Online\n2 - Ausente\n3 - Offline', '1');
+            const novoStatus = await customModal({
+                title: 'Status do Sistema',
+                message: 'Selecione o status atual:',
+                defaultValue: state.systemStatus || 'Online',
+                options: [
+                    {value: 'Online', label: 'Online'},
+                    {value: 'Ausente', label: 'Ausente'},
+                    {value: 'Offline', label: 'Offline'}
+                ]
+            });
 
-            let novoStatus = 'Online';
-            if(opcao?.trim() === '2') novoStatus = 'Ausente';
-            if (opcao?.trim() === '3') novoStatus = 'Offline';
-
-            if (opcao !== null) {
+            if (novoStatus) {
                 state.systemStatus = novoStatus;
                 saveSystemData(state);
                 renderSystem();
