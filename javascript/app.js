@@ -768,7 +768,11 @@ function attachEventListeners() {
 }
 
 // INICIALIZADOR DO SISTEMA
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // CARREGA OS DADOS ASSINCRONAMENTE DO BACKEND C# / MYSQL:
+    state = await loadSystemData();
+    
+    // EXECUTA AS VERIFICAÇÕES E RENDERIZAÇÃO INICIAL:
     checkAndResetHorasDiarias(state)
     startClock();
     renderSystem();
@@ -776,7 +780,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // SE O USUÁRIO DEIXAR A ABA ABERTA DE MADRUGADA E VOLTAR PELA MANHÃ, O CICLO RESETA
-window.addEventListener('focus', () => {
+window.addEventListener('focus', async () => {
+    // RECARREGA O ESTADO ATUALIZADO CASO TENHA HAVIDO MUDANÇAS:
+    state = await loadSystemData();
     checkAndResetHorasDiarias(state);
     renderSystem();
 });
