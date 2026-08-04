@@ -10,6 +10,10 @@ namespace backend.Models
 
         public double HorasHoje {get; set;} = 0;
 
+        public double HorasTotais {get; set;} = 0;
+
+        public double Progresso {get; set;} = 0;
+
         public double MetaHorasSemanal {get; set;} = 0;
 
         public DateTime UltimaAtualizacao {get; set;} = DateTime.UtcNow;

@@ -1,4 +1,4 @@
-// STORAGE.JS - GERENCIADOR DE ESTADO:
+// STORAGE.JS - GERENCIADOR DE ESTADO E COMUNICAÇÃO COM API (C# / MYSQL)
 
 import { perfilInicial } from './data/perfil.js';
 import { estudos as estudosIniciais } from './data/estudos.js';
@@ -9,7 +9,8 @@ import { lazer as lazerInicial } from './data/lazer.js';
 const STORAGE_KEY = 'NEXUSHUB_DATA_V3';
 const API_BASE_URL = 'http://localhost:5107/api';
 
-// HELPERS DE REQUISIÇÃO (FETCH):
+// HELPERS DE REQUISIÇÃO (FETCH API)
+
 async function fetchAPI(endpoint) {
     try {
         const response = await fetch(`${API_BASE_URL}/${endpoint}`);
@@ -22,112 +23,115 @@ async function fetchAPI(endpoint) {
     return null;
 }
 
-// CARREGA OS DADOS DO SISTEMA (PERFIL DO MYSQL + OUTROS MÓDULOS DO LOCALSTORAGE):
+async function sendAPI(endpoint, method, data) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (error) {
+        console.warn(`[API Offline] Falha ao enviar para ${endpoint}`, error);
+    }
+    return null;
+}
+
+// LOCALSTORAGE
+
+export function saveSystemData(state) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+        console.error('Erro ao salvar dados no localStorage:', e);
+    }
+}
+
+// CARREGAMENTO UNIFICADO (MYSQL + LOCALSTORAGE)
+
 export async function loadSystemData() {
-    // TENTA PEGAR OS DADOS JÁ SALVOS NO LOCALSTORAGE:
     let localData = {};
-
-    const rawLocal = localStorage.getItem(STORAGE_KEY);
-    if (rawLocal) {
-        try {
-            localData = JSON.parse(rawLocal);
-        } catch (e) {
-            console.error("Erro ao ler LocalStorage:", e);
-        }
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) localData = JSON.parse(saved);
+    } catch (e) {
+        console.error('Erro ao ler localStorage:', e);
     }
 
-    // BUSCA OS DADOS DO PERFIL E PROJETOS EM PARALELO DO MYSQL:
-    const [perfilBackend, projetosBackend] = await Promise.all([
-        fetchAPI('perfil'),
-        fetchAPI('projetos')
-    ]);
+    // Buscar dados da API C#
+    const perfilAPI = await fetchAPI('perfil');
+    const projetosAPI = await fetchAPI('projetos');
+    const estudosAPI = await fetchAPI('estudos');
 
-    // MONTA O ESTADO UNIFICADO DA APLICAÇÃO:
-    return {
-        perfil: perfilBackend || localData.perfil || perfilInicial,
-        projetos: projetosBackend || localData.projetos || projetosIniciais || [],
-        estudos: localData.estudos || estudosIniciais || {materias: [], horasTotais: 0, metasHorasSemanal: 0},
-        metas: localData.metas || metasIniciais || [],
-        lazer: localData.lazer || lazerInicial || {jogos: [], livros: [], filmes: [], series: []}
+    // Unifica os estudos do banco com a estrutura do frontend
+    let estudosFinais = localData.estudos || estudosIniciais;
+    if (Array.isArray(estudosAPI) && estudosAPI.length > 0) {
+        const materiasConvertidas = estudosAPI.map(e => ({
+            id: e.id,
+            nome: e.materia || e.nome || 'Sem nome',
+            progresso: e.progresso ?? 0
+        }));
+
+        const primeiroRegistro = estudosAPI[0];
+        estudosFinais = {
+            horasHoje: primeiroRegistro.horasHoje ?? estudosFinais.horasHoje ?? 0,
+            horasTotais: primeiroRegistro.horasTotais ?? estudosFinais.horasTotais ?? 0,
+            metasHorasSemanal: primeiroRegistro.metaHorasSemanal ?? estudosFinais.metasHorasSemanal ?? 0,
+            materias: materiasConvertidas,
+            ultimoReset: localData.estudos?.ultimoReset || null,
+            ultimoResetSemana: localData.estudos?.ultimoResetSemana || null
+        };
+    }
+
+    const state = {
+        perfil: perfilAPI || localData.perfil || perfilInicial,
+        projetos: Array.isArray(projetosAPI) ? projetosAPI : (localData.projetos || projetosIniciais),
+        estudos: estudosFinais,
+        metas: localData.metas || metasIniciais,
+        lazer: localData.lazer || lazerInicial,
+        systemStatus: localData.systemStatus || 'Online'
     };
+
+    saveSystemData(state);
+    return state;
 }
 
-// === PERSISTÊNCIA E OPERAÇÕES DO BANCO ===
+// INTEGRAÇÕES COM API - PERFIL
 
-// PERFIL:
 export async function salvarPerfilAPI(perfil) {
-    const perfilId = perfil?.id || 1;
-    try {
-        const response = await fetch(`${API_BASE_URL}/perfil/${perfilId}`, {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                nome: perfil.nome,
-                cargo: perfil.cargo,
-                bio: perfil.bio || ""
-            })
-        });
-
-        if (response.ok) {
-            console.log("Perfil salvo no MySQL!");
-            return true;
-        }
-    } catch (error) {
-        console.error("Erro ao salvar perfil no backend:", error);
-    }
-    return false;
+    return await sendAPI('perfil', 'POST', perfil);
 }
 
-// PROJETOS (CRIAR / EDITAR):
+// INTEGRAÇÕES COM API - PROJETOS
+
 export async function salvarProjetosAPI(projeto) {
-    const ehEdicao = Boolean(projeto.id); // SE POSSUI ID, ATUALIZA. SE NÃO POSSUI, CRIA:
-    const url = ehEdicao ? `${API_BASE_URL}/projetos/${projeto.id}` : `${API_BASE_URL}/projetos`;
-    const metodo = ehEdicao ? 'PUT' : 'POST';
-
-    try {
-        const response = await fetch(url, {
-            method: metodo,
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(projeto)
-        });
-
-        if (response.ok) {
-            console.log(`Projeto ${ehEdicao ? 'atualizado' : 'criado'} no MySQL!`);
-            return ehEdicao ? await response.json() : true;
-        }
-    } catch (error) {
-        console.log("Erro ao salvar projeto no backend:", error);
-    }
-    return false;
+    const method = projeto.id ? 'PUT' : 'POST';
+    const endpoint = projeto.id ? `projetos/${projeto.id}` : 'projetos';
+    return await sendAPI(endpoint, method, projeto);
 }
 
-// PROJETOS (EXCLUIR):
 export async function deletarProjetoAPI(id) {
     try {
-        const response = await fetch(`${API_BASE_URL}/projetos/${id}`, {
-            method: 'DELETE'
-        });
-
-        if (response.ok) {
-            console.log("Projeto removido do MySQL!");
-            return true;
-        }
-    } catch (error) {
-        console.error("Erro ao deletar projeto no backend:", error);
+        await fetch(`${API_BASE_URL}/projetos/${id}`, { method: 'DELETE' });
+    } catch (e) {
+        console.warn(`[API Offline] Não foi possível deletar projeto ${id}`, e);
     }
-    return false;
 }
 
-// SALVA AS ALTERAÇÕES NO SISTEMA:
-export async function saveSystemData(data) {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (error) {
-        console.error("Erro ao salvar no LocalStorage", error);
-    }
+// INTEGRAÇÕES COM API - ESTUDOS
 
-    // DISPARA A SINCRONIZAÇÃO DO PERFIL CASO ELE TENHA MUDADO:
-    if (data.perfil) {
-        salvarPerfilAPI(data.perfil);
+export async function salvarEstudosAPI(estudo) {
+    const method = estudo.id ? 'PUT' : 'POST';
+    const endpoint = estudo.id ? `estudos/${estudo.id}` : 'estudos';
+    return await sendAPI(endpoint, method, estudo);
+}
+
+export async function deletarEstudosAPI(id) {
+    try {
+        await fetch(`${API_BASE_URL}/estudos/${id}`, { method: 'DELETE' });
+    } catch (e) {
+        console.warn(`[API Offline] Não foi possível deletar estudo ${id}`, e);
     }
 }

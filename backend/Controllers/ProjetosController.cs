@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Backend.Data;
-using Backend.Models;
 using backend.Models;
 
-namespace backend.Controllers
+namespace Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -17,26 +16,35 @@ namespace backend.Controllers
             _context = context;
         }
 
-        // GET (LISTAR TODOS):
+        // GET - Listar todos os projetos
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Projeto>>> GetProjetos()
         {
             return await _context.Projetos.ToListAsync();
         }
 
-        // POST (CRIAR NOVO PROJETO):
+        // GET por ID
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Projeto>> GetProjeto(int id)
+        {
+            var projeto = await _context.Projetos.FindAsync(id);
+            if (projeto == null) return NotFound();
+            return projeto;
+        }
+
+        // POST - Criar novo projeto
         [HttpPost]
-        public async Task<ActionResult<Projeto>> PostProjetos(Projeto projeto)
+        public async Task<ActionResult<Projeto>> PostProjeto(Projeto projeto)
         {
             _context.Projetos.Add(projeto);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetProjetos), new {id = projeto.Id}, projeto);
+            return CreatedAtAction(nameof(GetProjeto), new { id = projeto.Id }, projeto);
         }
 
-        // PUT (EDITAR PROJETO EXISTENTE):
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> PutProjeto(int id, Projeto projeto)
+        // PUT - Editar projeto existente
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutProjeto(int id, [FromBody] Projeto projeto)
         {
             if (id != projeto.Id) return BadRequest();
 
@@ -51,11 +59,12 @@ namespace backend.Controllers
                 if (!ProjetoExists(id)) return NotFound();
                 throw;
             }
+
             return NoContent();
         }
 
-        // DELETE (EXCLUIR PROJETO):
-        [HttpDelete]
+        // DELETE - Excluir projeto
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProjeto(int id)
         {
             var projeto = await _context.Projetos.FindAsync(id);

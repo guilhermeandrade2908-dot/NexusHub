@@ -1,6 +1,6 @@
 // APP.JS - CONTROLLER GERAL
 
-import { loadSystemData, saveSystemData, salvarPerfilAPI, salvarProjetosAPI, deletarProjetoAPI } from './storage.js';
+import {loadSystemData, saveSystemData, salvarPerfilAPI, salvarProjetosAPI, deletarProjetoAPI, salvarEstudosAPI, deletarEstudosAPI} from './storage.js';
 import {
     renderPerfilCard,
     renderPerfilPage,
@@ -12,6 +12,7 @@ import {
     renderSidebarProfile
 } from './components.js';
 
+// ESTADO INICIAL DO SISTEMA
 let state = loadSystemData();
 
 // FUNÇÃO DO MODAL GLOBAL:
@@ -116,7 +117,7 @@ function startClock() {
     setInterval(update, 1000);
 }
 
-// FUNÇÃO QUE CHECA E DÁ O RESET DE HORAS DIARIAS DO SISTEMA:
+// FUNÇÃO QUE CHECA E DÁ O RESET DE HORAS DIARIAS E SEMANAIS DO SISTEMA:
 function checkAndResetHorasDiarias(state) {
     if (!state.estudos) state.estudos = {};
 
@@ -134,14 +135,14 @@ function checkAndResetHorasDiarias(state) {
     const cicloString = dataCiclo.toISOString().split('T')[0];
     const ultimoReset = state.estudos.ultimoReset;
 
-    // SE O CICLO ATUAL FOR DIFERENTE DO ÚLTIMO RESET REGISTRADO, ZERAMOS!
+    // SE O CICLO ATUAL FOR DIFERENTE DO ÚLTIMO RESET REGISTRADO, ZERAMOS:
     if (ultimoReset !== cicloString) {
         state.estudos.horasHoje = 0;
         state.estudos.ultimoReset = cicloString;
         saveSystemData(state);
     }
 
-    // DETERMINA O RESET SEMANAL
+    // RESET SEMANAL (SEGUNDA-FEIRA):
     const diaDaSemana = dataCiclo.getDay();
     const ultimoResetSemana = state.estudos.ultimoResetSemana;
 
@@ -149,6 +150,19 @@ function checkAndResetHorasDiarias(state) {
         state.estudos.horasTotais = 0;
         state.estudos.ultimoResetSemana = cicloString;
         saveSystemData(state);
+
+        // Atualiza o banco junto com o reset semanal:
+        const primeiraMateria = state.estudos.materias?.[0];
+        if (primeiraMateria?.id) {
+            salvarEstudosAPI({
+                id: primeiraMateria.id,
+                materia: primeiraMateria.nome,
+                horasHoje: 0,
+                horasTotais: 0,
+                metaHorasSemanal: Number(state.estudos.metasHorasSemanal) || 0,
+                ultimaAtualizacao: new Date().toISOString()
+            });
+        }
     }
 }
 
@@ -247,7 +261,7 @@ function attachEventListeners() {
 
             const opcoes = projetos.map((p, idx) => ({
                 value: String(idx),
-                label: `${p.nome} (${p.status || 'Sem status'})`
+                label: `${p.nome} (${p.statusTag || 'Sem status'})`
             }));
 
             const escolha = await customModal({
@@ -263,7 +277,7 @@ function attachEventListeners() {
                     state.perfil.focoAtual = {
                         titulo: proj.nome,
                         descricao: proj.descricao,
-                        statusTag: proj.status
+                        statusTag: proj.statusTag
                     };
                     saveSystemData(state);
                     renderSystem();
@@ -298,162 +312,231 @@ function attachEventListeners() {
 
             state.perfil = {...state.perfil, nome, cargo, bio};
             saveSystemData(state);
+            await salvarPerfilAPI(state.perfil);
             renderSystem();
             return;
         }
 
         // ESTUDOS (ADD / EDIT / DELETE)
-        if (target.closest('#btn-add-materia')) {
-            const nome = await customModal({
-                title: 'Nova Matéria',
-                message: 'Digite o nome da matéria:'
-            });
-            if (!nome?.trim()) return;
+    if (target.closest('#btn-add-materia')) {
+        const nome = await customModal({
+            title: 'Nova Matéria',
+            message: 'Digite o nome da matéria:'
+        });
+        if (!nome?.trim()) return;
+        
+        const progressoInput = await customModal({
+            title: 'Progresso Inicial',
+            message: `Qual a porcentagem já concluída de "${nome.trim()}"?`,
+            defaultValue: '0',
+            type: 'number'
+        });
+        if (progressoInput === null) return;
+
+        const progressoNum = Math.min(100, Math.max(0, Number(progressoInput) || 0));
+
+        if (!state.estudos) state.estudos = { materias: [] };
+        if (!Array.isArray(state.estudos.materias)) state.estudos.materias = [];
+
+        const payloadBackend = {
+            id: 0,
+            materia: nome.trim(),
+            progresso: progressoNum,
+            horasHoje: Number(state.estudos.horasHoje) || 0,
+            horasTotais: Number(state.estudos.horasTotais) || 0,
+            metaHorasSemanal: Number(state.estudos.metaHorasSemanal || state.estudos.metasHorasSemanal) || 0,
+            ultimaAtualizacao: new Date().toISOString()
+        };
+
+        const retBackend = await salvarEstudosAPI(payloadBackend);
+
+        state.estudos.materias.push({
+            id: retBackend?.id || Date.now(),
+            nome: nome.trim(),
+            progresso: progressoNum
+        });
+
+        saveSystemData(state);
+        renderSystem();
+        return;
+    }
+
+    const btnEditMat = target.closest('.btn-edit-materia');
+    if (btnEditMat) {
+        const idx = Number(btnEditMat.getAttribute('data-idx'));
+        const mat = state.estudos?.materias?.[idx];
+        if (!mat) return;
+
+        const novoNome = await customModal({
+            title: 'Editar Matéria',
+            message: 'Altere o nome da matéria:',
+            defaultValue: mat.nome
+        });
+        if (novoNome === null) return;
+
+        const novoProg = await customModal({
+            title: 'Editar Progresso (%)',
+            message: 'Altere o percentual concluído:',
+            defaultValue: mat.progresso,
+            type: 'number'
+        });
+        if (novoProg === null) return;
+
+        const nomeFinal = novoNome.trim() || mat.nome;
+        const progFinal = Math.min(100, Math.max(0, Number(novoProg) || 0));
+
+        if (mat.id) {
             
-            const progresso = await customModal({
-                title: 'Progresso Inicial',
-                message: `Qual a porcentagem já concluída de "${nome.trim()}"?`,
-                defaultValue: '0',
+            await salvarEstudosAPI({
+                id: mat.id,
+                materia: nomeFinal,
+                progresso: progFinal,
+                horasHoje: Number(state.estudos.horasHoje) || 0,
+                horasTotais: Number(state.estudos.horasTotais) || 0,
+                metaHorasSemanal: Number(state.estudos.metaHorasSemanal || state.estudos.metasHorasSemanal) || 0,
+                ultimaAtualizacao: new Date().toISOString()
+            });
+        }
+
+        state.estudos.materias[idx] = {
+            ...mat,
+            nome: nomeFinal,
+            progresso: progFinal
+        };
+
+        saveSystemData(state);
+        renderSystem();
+        return;
+    }
+
+    const btnDelMat = target.closest('.btn-delete-materia');
+    if (btnDelMat) {
+        const idx = Number(btnDelMat.getAttribute('data-idx'));
+        const mat = state.estudos?.materias?.[idx];
+        if (!mat) return;
+
+        const confirmou = await customModal({
+            title: 'Excluir Matéria',
+            message: `Tem certeza que deseja remover a matéria <strong>"${mat.nome}"</strong>?`,
+            isConfirm: true,
+            isDanger: true
+        });
+
+        if (confirmou) {
+            if (mat.id) {
+                await deletarEstudosAPI(mat.id);
+            }
+            state.estudos.materias.splice(idx, 1);
+            saveSystemData(state);
+            renderSystem();
+        }
+        return;
+    }
+
+    if (target.closest('#btn-add-horas-hoje')) {
+        if (!state.estudos) state.estudos = {};
+
+        const horasHojeAntigo = Number(state.estudos.horasHoje) || 0;
+
+        const opcao = await customModal({
+            title: 'Horas Diárias',
+            message: `<strong>Hoje: ${horasHojeAntigo}h</strong><br>Escolha uma opção:`,
+            options: [
+                { value: '1', label: '1 - Somar horas estudadas hoje' },
+                { value: '2', label: '2 - Redefinir horas de Hoje' }
+            ]
+        });
+
+        if (!opcao) return;
+
+        let novasHorasHoje = horasHojeAntigo;
+
+        if (opcao === '1') {
+            const inputAdd = await customModal({
+                title: 'Somar Horas',
+                message: 'Quantas horas você estudou hoje?',
+                defaultValue: '1',
                 type: 'number'
             });
-            if (progresso === null) return;
+            const numAdd = Number(inputAdd);
 
-            if (!state.estudos) state.estudos = {};
-            if (!Array.isArray(state.estudos.materias)) state.estudos.materias = [];
-
-            state.estudos.materias.push({
-                nome: nome.trim(),
-                progresso: Math.min(100, Math.max(0, Number(progresso) || 0))
+            if (inputAdd !== null && !isNaN(numAdd) && numAdd > 0) {
+                novasHorasHoje = horasHojeAntigo + numAdd;
+            }
+        } else if (opcao === '2') {
+            const inputHoje = await customModal({
+                title: 'Redefinir Horas de Hoje',
+                message: 'Digite o novo valor total de horas para HOJE:',
+                defaultValue: horasHojeAntigo,
+                type: 'number'
             });
+            const numHoje = Number(inputHoje);
+
+            if (inputHoje !== null && !isNaN(numHoje) && numHoje >= 0) {
+                novasHorasHoje = numHoje;
+            }
+        }
+
+        if (novasHorasHoje !== horasHojeAntigo) {
+            const diff = novasHorasHoje - horasHojeAntigo;
+
+            state.estudos.horasHoje = novasHorasHoje;
+
+            const totalSemanalAntigo = Number(state.estudos.horasTotais) || 0;
+            state.estudos.horasTotais = Math.max(0, totalSemanalAntigo + diff);
+
+            const primeiraMateria = state.estudos.materias?.[0];
+            if (primeiraMateria?.id) {
+                await salvarEstudosAPI({
+                    id: primeiraMateria.id,
+                    materia: primeiraMateria.nome,
+                    progresso: Number(primeiraMateria.progresso) || 0,
+                    horasHoje: novasHorasHoje,
+                    horasTotais: state.estudos.horasTotais,
+                    metaHorasSemanal: Number(state.estudos.metaHorasSemanal || state.estudos.metasHorasSemanal) || 0,
+                    ultimaAtualizacao: new Date().toISOString()
+                });
+            }
 
             saveSystemData(state);
             renderSystem();
-            return;
         }
+        return;
+    }
 
-        const btnEditMat = target.closest('.btn-edit-materia');
-        if (btnEditMat) {
-            const idx = Number(btnEditMat.getAttribute('data-idx'));
-            const mat = state.estudos?.materias?.[idx];
-            if (!mat) return;
+    if (target.closest('#btn-edit-meta-horas')) {
+        const atual = state.estudos?.metaHorasSemanal || state.estudos?.metasHorasSemanal || 0;
+        const novaMeta = await customModal({
+            title: 'Meta Semanal de Horas',
+            message: 'Digite a sua nova meta semanal em horas:',
+            defaultValue: atual,
+            type: 'number'
+        });
 
-            const novoNome = await customModal({
-                title: 'Editar Matéria',
-                message: 'Altere o nome da matéria:',
-                defaultValue: mat.nome
-            });
-            if (novoNome === null) return;
-
-            const novoProg = await customModal({
-                title: 'Editar Progresso (%)',
-                message: 'Altere o percentual concluído:',
-                defaultValue: mat.progresso,
-                type: 'number'
-            });
-            if (novoProg === null) return;
-
-            state.estudos.materias[idx] = {
-                nome: novoNome.trim() || mat.nome,
-                progresso: Math.min(100, Math.max(0, Number(novoProg) || 0))
-            };
-
+        const numMeta = Number(novaMeta);
+        if (novaMeta !== null && !isNaN(numMeta) && numMeta >= 0) {
+            if (!state.estudos) state.estudos = {};
+            state.estudos.metaHorasSemanal = numMeta;
+            state.estudos.metasHorasSemanal = numMeta;
+            
+            const primeiraMateria = state.estudos.materias?.[0];
+            if (primeiraMateria?.id) {
+                await salvarEstudosAPI({
+                    id: primeiraMateria.id,
+                    materia: primeiraMateria.nome,
+                    progresso: Number(primeiraMateria.progresso) || 0, 
+                    horasHoje: Number(state.estudos.horasHoje) || 0,
+                    horasTotais: Number(state.estudos.horasTotais) || 0,
+                    metaHorasSemanal: numMeta,
+                    ultimaAtualizacao: new Date().toISOString()
+                });
+            }
+            
             saveSystemData(state);
             renderSystem();
-            return;
         }
-
-        const btnDelMat = target.closest('.btn-delete-materia');
-        if (btnDelMat) {
-            const idx = Number(btnDelMat.getAttribute('data-idx'));
-            const mat = state.estudos?.materias?.[idx];
-            if (!mat) return;
-
-            const confirmou = await customModal({
-                title: 'Excluir Matéria',
-                message: `Tem certeza que deseja remover a matéria <strong>"${mat.nome}"</strong>?`,
-                isConfirm: true,
-                isDanger: true
-            });
-
-            if (confirmou) {
-                state.estudos.materias.splice(idx, 1);
-                saveSystemData(state);
-                renderSystem();
-            }
-            return;
-        }
-
-        if (target.closest('#btn-add-horas-hoje')) {
-            const horasHoje = Number(state.estudos?.horasHoje) || 0;
-            const horasTotais = Number(state.estudos?.horasTotais) || 0;
-
-            const opcao = await customModal({
-                title: 'Horas Diárias',
-                message: `<strong>Hoje: ${horasHoje}h</strong> | <strong>Total Semanal: ${horasTotais}h</strong><br>Escolha uma opção:`,
-                options: [
-                    {value: '1', label: '1 - Somar horas estudadas hoje'},
-                    {value: '2', label: '2 - Redefinir horas de Hoje'}
-                ]
-            });
-
-            if (!opcao) return;
-
-            if (!state.estudos) state.estudos = {};
-
-            if (opcao === '1') {
-                const inputAdd = await customModal({
-                    title: 'Somar Horas',
-                    message: 'Quantas horas você estudou hoje?',
-                    defaultValue: '1',
-                    type: 'number'
-                });
-                const numAdd = Number(inputAdd);
-
-                if (inputAdd !== null && !isNaN(numAdd) && numAdd > 0) {
-                    state.estudos.horasHoje = horasHoje + numAdd;
-                    state.estudos.horasTotais = horasTotais + numAdd;
-                    saveSystemData(state);
-                    renderSystem();
-                }
-            } else if (opcao === '2') {
-                const inputHoje = await customModal({
-                    title: 'Redefinir Horas de Hoje',
-                    message: 'Digite o novo valor total de horas para HOJE:',
-                    defaultValue: horasHoje,
-                    type: 'number'
-                });
-                const numHoje = Number(inputHoje);
-
-                if (inputHoje !== null && !isNaN(numHoje) && numHoje >= 0) {
-                    const diff = numHoje - horasHoje;
-                    state.estudos.horasHoje = numHoje;
-                    state.estudos.horasTotais = Math.max(0, horasTotais + diff);
-                    saveSystemData(state);
-                    renderSystem();
-                }
-            }
-            return;
-        }
-
-        if (target.closest('#btn-edit-meta-horas')) {
-            const atual = state.estudos?.metasHorasSemanal || state.estudos?.metasHorasSemanais || 0;
-            const novaMeta = await customModal({
-                title: 'Meta Semanal de Horas',
-                message: 'Digite a sua nova meta semanal em horas:',
-                defaultValue: atual,
-                type: 'number'
-            });
-
-            const numMeta = Number(novaMeta);
-            if (novaMeta !== null && !isNaN(numMeta) && numMeta >= 0) {
-                if (!state.estudos) state.estudos = {};
-                state.estudos.metasHorasSemanal = numMeta;
-                state.estudos.metasHorasSemanais = numMeta; // PARA MANTER COMPATIBILIDADE DE CHAVE
-                saveSystemData(state);
-                renderSystem()
-            }
-            return;
-        }
+        return;
+    }
 
         // PROJETOS (ADD / EDIT / DELETE)
         if (target.closest('#btn-add-projeto')) {
@@ -520,7 +603,7 @@ function attachEventListeners() {
             const novoStatus = await customModal({
                 title: 'Editar Status',
                 message: 'Selecione o novo status:',
-                defaultValue: proj.status,
+                defaultValue: proj.statusTag,
                 options: [
                     {value: 'Em Desenvolvimento', label: 'Em Desenvolvimento'},
                     {value: 'Planejamento', label: 'Planejamento'},
@@ -555,7 +638,7 @@ function attachEventListeners() {
 
             const confirmou = await customModal({
                 title: 'Excluir Projeto',
-                message: `Deseja realmente excluir o projeto <strong>"${projetoDeletado.nome}"</strong>?`,
+                message: `Deseja realmente excluir o projeto <strong>"${projDeletado.nome}"</strong>?`,
                 isConfirm: true,
                 isDanger: true
             });
@@ -646,7 +729,7 @@ function attachEventListeners() {
                             {value: 'Concluído', label: 'Concluído'},
                             {value: 'Pausado', label: 'Pausado'}
                         ]
-                    }) || satusAtual;
+                    }) || statusAtual;
 
                     state.lazer[cat][idx] = {
                         nome: novoNome.trim(),
@@ -783,7 +866,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     state = await loadSystemData();
     
     // EXECUTA AS VERIFICAÇÕES E RENDERIZAÇÃO INICIAL:
-    checkAndResetHorasDiarias(state)
+    checkAndResetHorasDiarias(state);
     startClock();
     renderSystem();
     attachEventListeners();

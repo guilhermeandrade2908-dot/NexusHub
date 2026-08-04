@@ -151,7 +151,7 @@ export function renderProjetosCard(projetos = []) {
 
     const projetosHTML = projetosList.map((proj, idx) => {
         const nome = escapeHTML(proj?.nome || 'Sem Nome');
-        const status = escapeHTML(proj?.status || 'Pendente');
+        const status = escapeHTML(proj?.statusTag || 'Pendente');
         const descricao = escapeHTML(proj?.descricao || '');
         const githubUrl = isSafeUrl(proj?.githubUrl) ? escapeHTML(proj.githubUrl) : null;
 
