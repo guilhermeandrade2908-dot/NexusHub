@@ -10,7 +10,6 @@ const STORAGE_KEY = 'NEXUSHUB_DATA_V3';
 const API_BASE_URL = 'http://localhost:5107/api';
 
 // HELPERS DE REQUISIÇÃO (FETCH API)
-
 async function fetchAPI(endpoint) {
     try {
         const response = await fetch(`${API_BASE_URL}/${endpoint}`);
@@ -23,24 +22,33 @@ async function fetchAPI(endpoint) {
     return null;
 }
 
-async function sendAPI(endpoint, method, data) {
+async function sendAPI(endpoint, method = 'GET', body = undefined) {
+    const url = `${API_BASE_URL}/${endpoint}`;
     try {
-        const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+        const response = await fetch(url, {
+            method,
+            headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+            body: body !== undefined ? JSON.stringify(body) : undefined
         });
-        if (response.ok) {
-            return await response.json();
+
+        if (!response.ok) {
+            console.error(`Erro HTTP ${response.status} ao acessar ${url}`);
+            return null;
         }
+
+        if (response.status === 204) {
+            return true;
+        }
+
+        const text = await response.text();
+        return text ? JSON.parse(text) : true;
     } catch (error) {
-        console.warn(`[API Offline] Falha ao enviar para ${endpoint}`, error);
+        console.error(`[API Offline] Falha ao enviar para ${url}`, error);
+        return null;
     }
-    return null;
 }
 
 // LOCALSTORAGE
-
 export function saveSystemData(state) {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -50,7 +58,6 @@ export function saveSystemData(state) {
 }
 
 // CARREGAMENTO UNIFICADO (MYSQL + LOCALSTORAGE)
-
 export async function loadSystemData() {
     let localData = {};
     try {
@@ -64,6 +71,7 @@ export async function loadSystemData() {
     const perfilAPI = await fetchAPI('perfil');
     const projetosAPI = await fetchAPI('projetos');
     const estudosAPI = await fetchAPI('estudos');
+    const metasAPI = await carregarMetasAPI();
 
     // Unifica os estudos do banco com a estrutura do frontend
     let estudosFinais = localData.estudos || estudosIniciais;
@@ -89,7 +97,8 @@ export async function loadSystemData() {
         perfil: perfilAPI || localData.perfil || perfilInicial,
         projetos: Array.isArray(projetosAPI) ? projetosAPI : (localData.projetos || projetosIniciais),
         estudos: estudosFinais,
-        metas: localData.metas || metasIniciais,
+        
+        metas: Array.isArray(metasAPI) ? metasAPI : (localData.metas || metasIniciais),
         lazer: localData.lazer || lazerInicial,
         systemStatus: localData.systemStatus || 'Online'
     };
@@ -99,13 +108,15 @@ export async function loadSystemData() {
 }
 
 // INTEGRAÇÕES COM API - PERFIL
-
 export async function salvarPerfilAPI(perfil) {
-    return await sendAPI('perfil', 'POST', perfil);
+    if (!perfil?.id) {
+        console.error('salvarPerfilAPI: perfil sem "id" — recarregue o estado antes de editar.');
+        return null;
+    }
+    return await sendAPI(`perfil/${perfil.id}`, 'PUT', perfil);
 }
 
 // INTEGRAÇÕES COM API - PROJETOS
-
 export async function salvarProjetosAPI(projeto) {
     const method = projeto.id ? 'PUT' : 'POST';
     const endpoint = projeto.id ? `projetos/${projeto.id}` : 'projetos';
@@ -121,7 +132,6 @@ export async function deletarProjetoAPI(id) {
 }
 
 // INTEGRAÇÕES COM API - ESTUDOS
-
 export async function salvarEstudosAPI(estudo) {
     const method = estudo.id ? 'PUT' : 'POST';
     const endpoint = estudo.id ? `estudos/${estudo.id}` : 'estudos';
@@ -133,5 +143,51 @@ export async function deletarEstudosAPI(id) {
         await fetch(`${API_BASE_URL}/estudos/${id}`, { method: 'DELETE' });
     } catch (e) {
         console.warn(`[API Offline] Não foi possível deletar estudo ${id}`, e);
+    }
+}
+
+// INTEGRAÇÕES COM API - METAS
+export async function carregarMetasAPI() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/metas`);
+        if (!response.ok) return [];
+        return await response.json();
+    } catch (error) {
+        console.error('Erro ao carregar metas:', error);
+        return [];
+    }
+}
+
+export async function salvarMetasAPI(payload) {
+    try {
+        const id = Number(payload.id) || 0;
+        const ehEdicao = id > 0;
+        const url = ehEdicao ? `${API_BASE_URL}/metas/${id}` : `${API_BASE_URL}/metas`;
+
+        const response = await fetch(url, {
+            method: ehEdicao ? 'PUT' : 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) return null;
+        if (response.status === 204) return payload;
+
+        return await response.json();
+    } catch (error) {
+        console.error('Erro ao salvar meta:', error);
+        return null;
+    }
+}
+
+export async function deletarMetaAPI(id) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/metas/${id}`, {
+            method: 'DELETE'
+        });
+        return response.ok;
+    } catch (error) {
+        console.error('Erro ao deletar meta:', error);
+        return false;
     }
 }

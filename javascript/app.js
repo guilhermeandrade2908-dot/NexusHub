@@ -1,6 +1,6 @@
 // APP.JS - CONTROLLER GERAL
 
-import {loadSystemData, saveSystemData, salvarPerfilAPI, salvarProjetosAPI, deletarProjetoAPI, salvarEstudosAPI, deletarEstudosAPI} from './storage.js';
+import {loadSystemData, saveSystemData, salvarPerfilAPI, salvarProjetosAPI, deletarProjetoAPI, salvarEstudosAPI, deletarEstudosAPI, carregarMetasAPI, salvarMetasAPI, deletarMetaAPI} from './storage.js';
 import {
     renderPerfilCard,
     renderPerfilPage,
@@ -769,20 +769,41 @@ function attachEventListeners() {
         }
 
         // METAS (CHECK / EDIT / DELETE / ADD)
-        if (target.closest('#btn-add-meta')) {
-            const texto = await customModal({
-                title: 'Nova Meta',
-                message: 'Digite a descrição da meta:'
+if (target.closest('#btn-add-meta')) {
+    const texto = await customModal({
+        title: 'Nova Meta',
+        message: 'Digite a descrição da meta:'
+    });
+
+    if (texto && texto.trim()) {
+        if (!Array.isArray(state.metas)) state.metas = [];
+
+        // envia para o banco de dados (ID 0 para criar)
+        const retBackend = await salvarMetasAPI({
+            id: 0,
+            texto: texto.trim(),
+            concluida: false
+        });
+
+        // usa o ID númerico que veio do banco
+        const idGerado = retBackend?.id || retBackend?.Id;
+
+        // atualiza o estado local com o ID correto retornado
+        if (idGerado) {
+            state.metas.push({
+                id: idGerado,
+                texto: texto.trim(),
+                concluida: false
             });
 
-            if (texto && texto.trim()) {
-                if (!Array.isArray(state.metas)) state.metas = [];
-                state.metas.push({id: Date.now().toString(), texto: texto.trim(), concluida: false});
-                saveSystemData(state);
-                renderSystem();
-            }
-            return;
+            saveSystemData(state);
+            renderSystem();
+        } else {
+            console.error('Erro: O banco não retornou o ID da nova meta.');
         }
+    }
+    return;
+}
 
         const btnEditMeta = target.closest('.btn-edit-meta');
         if (btnEditMeta) {
@@ -797,12 +818,22 @@ function attachEventListeners() {
             });
 
             if (texto && texto.trim()) {
-                meta.texto = texto.trim();
-                saveSystemData(state);
-                renderSystem();
+                const idNumerico = Number(meta.id);
+
+                // garante ID númerico igual no body e no parâmetro 
+                const atualizou = await salvarMetasAPI({
+                    id: idNumerico,
+                    texto: texto.trim(),
+                    concluida: Boolean(meta.concluida)
+                });
+                if (atualizou !== null) {
+                    meta.texto = texto.trim();
+                    saveSystemData(state);
+                    renderSystem();
+                }
             }
             return;
-        }
+    }
 
         const btnDelMeta = target.closest('.btn-delete-meta');
         if (btnDelMeta) {
@@ -819,6 +850,11 @@ function attachEventListeners() {
             });
 
             if (confirmou) {
+                const idNumerico = Number(id);
+                if (idNumerico) {
+                    await deletarMetaAPI(idNumerico);
+                }
+
                 state.metas = state.metas.filter(m => String(m.id) !== String(id));
                 saveSystemData(state);
                 renderSystem();
@@ -830,10 +866,21 @@ function attachEventListeners() {
             const id = target.getAttribute('data-meta-id');
             const meta = state.metas.find(m => String(m.id) === String(id));
             if (meta) {
-                meta.concluida = target.checked;
-                saveSystemData(state);
-                renderSystem();
-            }
+                const novoStatus = target.checked;
+                const idNumerico = Number(meta.id);
+                
+                const atualizou = await salvarMetasAPI({
+                    id: idNumerico,
+                    texto: meta.texto,
+                    concluida: novoStatus
+                });
+                
+                if (atualizou !== null) {
+                    meta.concluida = novoStatus;
+                    saveSystemData(state);
+                    renderSystem();
+                }
+             }
             return;
         }
 
