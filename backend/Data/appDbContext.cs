@@ -11,6 +11,7 @@ namespace backend.Data
         public DbSet<Projeto> Projetos { get; set; }
         public DbSet<Estudo> Estudos { get; set; }
         public DbSet<Meta> Metas {get; set;}
+        public DbSet<Lazer> Lazeres {get; set;}
 
     }
 }
