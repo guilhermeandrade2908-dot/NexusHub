@@ -27,7 +27,7 @@ export function renderPerfilCard(perfil = {}, projetos = []) {
     return `<div class="card card-perfil">
                 <div class="card-header">
                     <h3>Foco Atual</h3>
-                    <button id="btn-select-foco" class="btn-icon" title="Vincular Projeto ao Foco">🎯 Alterar Foco</button>
+                    <button id="btn-select-foco" class="btn-icon" title="Vincular Projeto ao Foco"><i class="ph ph-target" style="padding-right: 5px;"></i> Alterar Foco</button>
                 </div>
                 <div class="card-body">
                     <span class="badge badge-accent">${statusTag}</span>
@@ -70,7 +70,7 @@ export function renderPerfilPage(perfil = {}, systemStatus = 'Online') {
                     <p style="color: #bbb; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 6px;">${bio}</p>
                 </div>
                 <button id="btn-edit-perfil" class="btn-icon" style="padding: 8px 16px; background: #00e5ff; color: #000; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">
-                    ✏️ Editar Perfil
+                    <i class="ph ph-pencil"></i> Editar Perfil
                 </button>
             </div>`;
 }
@@ -96,8 +96,8 @@ export function renderEstudosCard(estudos = {}) {
                 </div>
             </div>
             <div style="display: flex; gap: 4px;">
-                <button class="btn-icon btn-edit-materia" data-idx="${idx}" title="Editar">✏️</button>
-                <button class="btn-icon btn-delete-materia" data-idx="${idx}" title="Excluir">🗑️</button>
+                <button class="btn-icon btn-edit-materia" data-idx="${idx}" title="Editar"><i class="ph ph-pencil"></i></button>
+                <button class="btn-icon btn-delete-materia" data-idx="${idx}" title="Excluir"><i class="ph ph-trash"></i></button>
             </div>
         </li>`;
     }).join('');
@@ -110,7 +110,7 @@ export function renderEstudosCard(estudos = {}) {
     return `
         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">📚 Estudos & Matérias</h3>
-            <button id="btn-add-materia" class="btn-icon">➕</button>
+            <button id="btn-add-materia" class="btn-icon"><i class="ph ph-plus"></i></button>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px;">
@@ -118,7 +118,7 @@ export function renderEstudosCard(estudos = {}) {
             <!-- 1. HOJE -->
             <div id="btn-add-horas-hoje" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer;" title="Clique para somar ou redefinir horas de hoje">
                 <span style="display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.7rem; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                    HOJE <span style="font-size: 0.8rem; color: #00e5ff;">✏️</span>
+                    HOJE <span style="font-size: 0.8rem; color: #00e5ff;"><i class="ph ph-pencil"></i></span>
                 </span>
                 <span style="display: block; font-size: 1.25rem; font-weight: 800; color: #00e5ff; margin-top: 4px;">${horasHoje} h</span>
             </div>
@@ -132,7 +132,7 @@ export function renderEstudosCard(estudos = {}) {
             <!-- 3. META SEMANAL -->
             <div id="btn-edit-meta-horas" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer;" title="Clique para editar meta">
                 <span style="display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 0.7rem; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                    META SEMANAL <span style="font-size: 0.8rem; color: #22c55e;">✏️</span>
+                    META SEMANAL <span style="font-size: 0.8rem; color: #22c55e;"><i class="ph ph-pencil"></i></span>
                 </span>
                 <span style="display: block; font-size: 1.25rem; font-weight: 800; color: #22c55e; margin-top: 4px;">${metaSemanal} h</span>
             </div>
@@ -163,8 +163,8 @@ export function renderProjetosCard(projetos = []) {
                             <span class="badge badge-status">${status}</span>
                         </div>
                         <div style="display:flex; align-items:center; gap: 0.25rem; flex-shrink: 0;">
-                            <button class="btn-icon btn-edit-projeto" data-idx="${idx}" title="Editar">✏️</button>
-                            <button class="btn-icon btn-delete-projeto" data-idx="${idx}" title="Excluir">🗑️</button>
+                            <button class="btn-icon btn-edit-projeto" data-idx="${idx}" title="Editar"><i class="ph ph-pencil"></i></button>
+                            <button class="btn-icon btn-delete-projeto" data-idx="${idx}" title="Excluir"><i class="ph ph-trash"></i></button>
                         </div>
                     </div>
 
@@ -179,7 +179,7 @@ export function renderProjetosCard(projetos = []) {
     return `<div class="section-projetos">
                 <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
                     <h3>Projetos</h3>
-                    <button id="btn-add-projeto" class="btn-icon" title="Novo Projeto">➕</button>
+                    <button id="btn-add-projeto" class="btn-icon" title="Novo Projeto"><i class="ph ph-plus"></i></button>
                 </div>
                 <div class="projetos-grid">
                     ${projetosHTML.length > 0 ? projetosHTML : '<p class="empty-msg">Nenhum projeto cadastrado.</p>'}
@@ -202,8 +202,8 @@ export function renderMetasCard(metas = []) {
                 <span class="meta-texto" style="${concluida ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${texto}</span>
             </label>
             <div>
-                <button class="btn-icon btn-edit-meta" data-meta-id="${id}" title="Editar">✏️</button>
-                <button class="btn-icon btn-delete-meta" data-meta-id="${id}" title="Excluir">🗑️</button>
+                <button class="btn-icon btn-edit-meta" data-meta-id="${id}" title="Editar"><i class="ph ph-pencil"></i></button>
+                <button class="btn-icon btn-delete-meta" data-meta-id="${id}" title="Excluir"><i class="ph ph-trash"></i></button>
             </div>
         </li>`;
     }).join('');
@@ -211,7 +211,7 @@ export function renderMetasCard(metas = []) {
     return `<div class="card card-metas">
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h3>Metas da Semana</h3>
-                    <button id="btn-add-meta" class="btn-icon" title="Adicionar Meta">➕</button>
+                    <button id="btn-add-meta" class="btn-icon" title="Adicionar Meta"><i class="ph ph-plus"></i></button>
                 </div>
                 <div class="card-body">
                     <ul class="metas-list" style="list-style:none; padding:0;">
@@ -224,10 +224,10 @@ export function renderMetasCard(metas = []) {
 // RENDER DE LAZER & MÍDIA
 export function renderLazerCard(lazer = {}) {
     const categorias = [
-        {chave: 'jogos', titulo: 'Jogos', icone: '🎮'},
-        {chave: 'livros', titulo: 'Livros', icone: '📖'},
-        {chave: 'filmes', titulo: 'Filmes', icone: '🎬'},
-        {chave: 'series', titulo: 'Séries', icone: '📺'}
+        {chave: 'jogos', titulo: 'Jogos', icone: '<i class="ph ph-game-controller"></i>'},
+        {chave: 'livros', titulo: 'Livros', icone: '<i class="ph ph-books"></i>'},
+        {chave: 'filmes', titulo: 'Filmes', icone: '<i class="ph ph-film-reel"></i>'},
+        {chave: 'series', titulo: 'Séries', icone: '<i class="ph ph-television-simple"></i>'}
     ];
 
     const colunasHTML = categorias.map(cat => {
@@ -261,8 +261,8 @@ export function renderLazerCard(lazer = {}) {
                         <span style="font-size: 0.68rem; color: ${statusColor}; font-weight: 600; text-transform: uppercase;">${status}</span>
                     </div>
                     <div style="display: flex; gap: 4px; flex-shrink: 0; align-items: center;">
-                        <button class="btn-icon btn-edit-lazer" data-cat="${cat.chave}" data-idx="${idx}" title="Editar" style="font-size: 0.75rem; opacity: 0.7; cursor: pointer; background: transparent; border: none;">✏️</button>
-                        <button class="btn-icon btn-delete-lazer" data-cat="${cat.chave}" data-idx="${idx}" title="Excluir" style="font-size: 0.75rem; opacity: 0.7; cursor: pointer; background: transparent; border: none;">🗑️</button>
+                        <button class="btn-icon btn-edit-lazer" data-cat="${cat.chave}" data-idx="${idx}" title="Editar" style="font-size: 0.75rem; opacity: 0.7; cursor: pointer; background: transparent; border: none;"><i class="ph ph-pencil"></i></button>
+                        <button class="btn-icon btn-delete-lazer" data-cat="${cat.chave}" data-idx="${idx}" title="Excluir" style="font-size: 0.75rem; opacity: 0.7; cursor: pointer; background: transparent; border: none;"><i class="ph ph-trash"></i></button>
                     </div>
                     </li>`;
         }).join('');
@@ -280,7 +280,7 @@ export function renderLazerCard(lazer = {}) {
         return `<div class="card card-lazer">
                     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <h3>Lazer & Mídia</h3>
-                        <button id="btn-add-lazer" class="btn-icon" title="Adicionar Mídia">➕</button>
+                        <button id="btn-add-lazer" class="btn-icon" title="Adicionar Mídia"><i class="ph ph-plus"></i></button>
                     </div>
                     <div class="card-body">
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">
