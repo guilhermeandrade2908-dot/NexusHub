@@ -72,6 +72,7 @@ export async function loadSystemData() {
     const projetosAPI = await fetchAPI('projetos');
     const estudosAPI = await fetchAPI('estudos');
     const metasAPI = await carregarMetasAPI();
+    const lazerAPI = await fetchAPI('lazer');
 
     // Unifica os estudos do banco com a estrutura do frontend
     let estudosFinais = localData.estudos || estudosIniciais;
@@ -93,13 +94,35 @@ export async function loadSystemData() {
         };
     }
 
+    let lazerFinal = localData.lazer || lazerInicial;
+
+    if (Array.isArray(lazerAPI)) {
+        lazerFinal = {
+            jogos: [],
+            livros: [],
+            filmes: [],
+            series: []
+        };
+
+        lazerAPI.forEach(item => {
+            const tipo = item.tipo?.toLowerCase();
+
+            if (!lazerFinal[tipo]) return;
+            
+                lazerFinal[tipo].push({
+                    id: item.id,
+                    nome: item.nome,
+                    status: item.status
+                });
+        });
+    }
+
     const state = {
         perfil: perfilAPI || localData.perfil || perfilInicial,
         projetos: Array.isArray(projetosAPI) ? projetosAPI : (localData.projetos || projetosIniciais),
         estudos: estudosFinais,
-        
         metas: Array.isArray(metasAPI) ? metasAPI : (localData.metas || metasIniciais),
-        lazer: localData.lazer || lazerInicial,
+        lazer: lazerFinal,
         systemStatus: localData.systemStatus || 'Online'
     };
 
@@ -188,6 +211,57 @@ export async function deletarMetaAPI(id) {
         return response.ok;
     } catch (error) {
         console.error('Erro ao deletar meta:', error);
+        return false;
+    }
+}
+
+// INTEGRAÇÕES COM API - LAZER
+export async function carregarLazerAPI() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/lazer`);
+
+        if (!response.ok) return [];
+
+        return await response.json();
+    } catch (error) {
+        console.error("Erro ao carregar itens de lazer:", error);
+        return [];
+    }
+}
+
+export async function salvarLazerAPI(payload) {
+    try {
+        const id = Number(payload.id) || 0;
+        const ehEdicao = id > 0;
+
+        const url = ehEdicao ? `${API_BASE_URL}/lazer/${id}` : `${API_BASE_URL}/lazer`;
+
+        const response = await fetch(url, {
+            method: ehEdicao ? 'PUT' : 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) return null;
+
+        if (response.status === 204) return payload;
+
+        return await response.json();
+    } catch (error) {
+        console.error("Erro ao salvar item de lazer:", error);
+        return null;
+    }
+}
+
+export async function deletarLazerAPI(id) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/lazer/${id}`, {
+            method: 'DELETE'
+        });
+
+        return response.ok;
+    } catch (error) {
+        console.error("Erro ao excluir item de lazer:", error);
         return false;
     }
 }

@@ -1,6 +1,6 @@
 // APP.JS - CONTROLLER GERAL
 
-import {loadSystemData, saveSystemData, salvarPerfilAPI, salvarProjetosAPI, deletarProjetoAPI, salvarEstudosAPI, deletarEstudosAPI, carregarMetasAPI, salvarMetasAPI, deletarMetaAPI} from './storage.js';
+import {loadSystemData, saveSystemData, salvarPerfilAPI, salvarProjetosAPI, deletarProjetoAPI, salvarEstudosAPI, deletarEstudosAPI, carregarMetasAPI, salvarMetasAPI, deletarMetaAPI, carregarLazerAPI, salvarLazerAPI, deletarLazerAPI} from './storage.js';
 import {
     renderPerfilCard,
     renderPerfilPage,
@@ -658,48 +658,49 @@ function attachEventListeners() {
 
         // LAZER (ADD | EDIT | DELETE)
         if (target.closest('#btn-add-lazer')) {
-            const catChave = await customModal({
-                title: 'Adicionar Lazer',
-                message: 'Selecione a categoria da mídia:',
-                options: [
-                    {value: 'jogos', label: 'Jogos'},
-                    {value: 'livros', label: 'Livros'},
-                    {value: 'filmes', label: 'Filmes'},
-                    {value: 'series', label: 'Séries'}
-                ]
-            });
 
-            if (catChave) {
-                const nome = await customModal({
-                    title: 'Nome do Item',
-                    message: 'Digite o nome da mídia:'
-                });
+        const catChave = await customModal({
+            title: 'Adicionar Lazer',
+            message: 'Selecione a categoria da mídia:',
+            options: [
+                { value: 'jogos', label: 'Jogos' },
+                { value: 'livros', label: 'Livros' },
+                { value: 'filmes', label: 'Filmes' },
+                { value: 'series', label: 'Séries' }
+            ]
+        });
 
-                if (nome && nome.trim()) {
-                    const statusTxt = await customModal({
-                        title: 'Status Inicial',
-                        message:'Qual a situação atual?',
-                        options: [
-                            {value: 'Em Andamento', label: 'Em Andamento'},
-                            {value: 'Concluído', label: 'Concluído'},
-                            {value: 'Pausado', label: 'Pausado'}
-                        ]
-                    }) || 'Em Andamento';
+        if (!catChave) return;
 
-                    if (!state.lazer) state.lazer = {};
-                    if (!Array.isArray(state.lazer[catChave])) state.lazer[catChave] = [];
+        const nome = await customModal({
+            title: 'Nome do Item',
+            message: 'Digite o nome da mídia:'
+        });
 
-                    state.lazer[catChave].push({
-                        nome: nome.trim(),
-                        status: statusTxt
-                    });
+        if (!nome?.trim()) return;
 
-                    saveSystemData(state);
-                    renderSystem();
-                }
-            }
-            return;
-        }
+        const statusTxt = await customModal({
+            title: 'Status Inicial',
+            message: 'Qual a situação atual?',
+            options: [
+                { value: 'Planejado', label: 'Planejado' },
+                { value: 'Em Andamento', label: 'Em Andamento' },
+                { value: 'Concluído', label: 'Concluído' },
+                { value: 'Pausado', label: 'Pausado' }
+            ]
+        }) || 'Em Andamento';
+
+        await salvarLazerAPI({
+            tipo: catChave,
+            nome: nome.trim(),
+            status: statusTxt
+        });
+
+        state = await loadSystemData();
+        renderSystem();
+
+        return;
+    }
         
         const btnEditLazer = target.closest('.btn-edit-lazer');
         if (btnEditLazer) {
@@ -709,101 +710,108 @@ function attachEventListeners() {
             if (state.lazer && Array.isArray(state.lazer[cat]) && state.lazer[cat][idx]) {
                 const itemAtual = state.lazer[cat][idx];
 
-                // TRATA ITEM ANTIGO (STRING) OU NOVO (OBJETO)
-                const nomeAtual = typeof itemAtual === 'object' ? itemAtual.nome : String(itemAtual);
-                const statusAtual = typeof itemAtual === 'object' ? itemAtual.status : 'Em Andamento';
-
                 const novoNome = await customModal({
                     title: 'Editar Item de Lazer',
                     message: 'Atualize o nome do item:',
-                    defaultValue: nomeAtual
+                    defaultValue: itemAtual.nome
                 });
 
-                if (novoNome && novoNome.trim()) {
-                    const novoStatus = await customModal({
-                        title: 'Atualizar Status',
-                        message: 'Selecione o novo status:',
-                        defaultValue: statusAtual,
-                        options: [
-                            {value: 'Em Andamento', label: 'Em Andamento'},
-                            {value: 'Concluído', label: 'Concluído'},
-                            {value: 'Pausado', label: 'Pausado'}
-                        ]
-                    }) || statusAtual;
+                if (novoNome === null) return;
 
-                    state.lazer[cat][idx] = {
-                        nome: novoNome.trim(),
-                        status: novoStatus
-                    };
+                const novoStatus = await customModal({
+                    title: 'Atualizar Status',
+                    message: 'Selecione o novo status:',
+                    defaultValue: itemAtual.status,
+                    options: [
+                        { value: 'Planejado', label: 'Planejado' },
+                        { value: 'Em Andamento', label: 'Em Andamento' },
+                        { value: 'Concluído', label: 'Concluído' },
+                        { value: 'Pausado', label: 'Pausado' }
+                    ]
+                });
 
-                    saveSystemData(state);
-                    renderSystem();
-                }
+                if (novoStatus === null) return;
+
+                await salvarLazerAPI({
+                    id: itemAtual.id,
+                    tipo: cat,
+                    nome: novoNome.trim(),
+                    status: novoStatus
+                });
+
+                state = await loadSystemData();
+                renderSystem();
             }
+
             return;
         }
 
         const btnDelLazer = target.closest('.btn-delete-lazer');
+
         if (btnDelLazer) {
             const cat = btnDelLazer.getAttribute('data-cat');
             const idx = Number(btnDelLazer.getAttribute('data-idx'));
-            
+
             if (state.lazer && Array.isArray(state.lazer[cat]) && state.lazer[cat][idx]) {
-                    const item = state.lazer[cat][idx];
-                    const itemNome = typeof item === 'object' ? item.nome : String(item);
 
-                    const confirmou = await customModal({
-                        title: 'Remover Item',
-                        message: `Deseja realmente remover o item <strong>"${itemNome}"</strong> da sua lista?`,
-                        isConfirm: true,
-                        isDanger: true
-                    });
+                const item = state.lazer[cat][idx];
 
-                    if (confirmou) {
-                        state.lazer[cat].splice(idx, 1);
-                        saveSystemData(state);
-                        renderSystem();
-                    }
+                const confirmou = await customModal({
+                    title: 'Remover Item',
+                    message: `Deseja realmente remover o item <strong>"${item.nome}"</strong> da sua lista?`,
+                    isConfirm: true,
+                    isDanger: true
+                });
+
+                if (confirmou) {
+
+                    await deletarLazerAPI(item.id);
+
+                    state = await loadSystemData();
+
+                    renderSystem();
+                }
             }
+
             return;
         }
 
         // METAS (CHECK / EDIT / DELETE / ADD)
-if (target.closest('#btn-add-meta')) {
-    const texto = await customModal({
-        title: 'Nova Meta',
-        message: 'Digite a descrição da meta:'
-    });
-
-    if (texto && texto.trim()) {
-        if (!Array.isArray(state.metas)) state.metas = [];
-
-        // envia para o banco de dados (ID 0 para criar)
-        const retBackend = await salvarMetasAPI({
-            id: 0,
-            texto: texto.trim(),
-            concluida: false
-        });
-
-        // usa o ID númerico que veio do banco
-        const idGerado = retBackend?.id || retBackend?.Id;
-
-        // atualiza o estado local com o ID correto retornado
-        if (idGerado) {
-            state.metas.push({
-                id: idGerado,
-                texto: texto.trim(),
-                concluida: false
+        if (target.closest('#btn-add-meta')) {
+            const texto = await customModal({
+                title: 'Nova Meta',
+                message: 'Digite a descrição da meta:'
             });
 
-            saveSystemData(state);
-            renderSystem();
-        } else {
-            console.error('Erro: O banco não retornou o ID da nova meta.');
+            if (texto && texto.trim()) {
+                if (!Array.isArray(state.metas)) state.metas = [];
+
+                // envia para o banco de dados (ID 0 para criar)
+                const retBackend = await salvarMetasAPI({
+                    id: 0,
+                    texto: texto.trim(),
+                    concluida: false
+                });
+
+                // usa o ID númerico que veio do banco
+                const idGerado = retBackend?.id || retBackend?.Id;
+
+                // atualiza o estado local com o ID correto retornado
+                if (idGerado) {
+                    state.metas.push({
+                        id: idGerado,
+                        texto: texto.trim(),
+                        concluida: false
+                    });
+
+                    saveSystemData(state);
+                    renderSystem();
+                } else {
+                    console.error('Erro: O banco não retornou o ID da nova meta.');
+                }
+            }
+            return;
         }
-    }
-    return;
-}
 
         const btnEditMeta = target.closest('.btn-edit-meta');
         if (btnEditMeta) {
