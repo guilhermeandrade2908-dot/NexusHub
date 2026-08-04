@@ -1,6 +1,6 @@
 // APP.JS - CONTROLLER GERAL
 
-import { loadSystemData, saveSystemData } from './storage.js';
+import { loadSystemData, saveSystemData, salvarPerfilAPI, salvarProjetosAPI, deletarProjetoAPI } from './storage.js';
 import {
     renderPerfilCard,
     renderPerfilPage,
@@ -480,9 +480,18 @@ function attachEventListeners() {
                 ]
             }) || 'Em Desenvolvimento';
 
-            if (!Array.isArray(state.projetos)) state.projetos = [];
-            state.projetos.push({id: Date.now().toString(), nome: nome.trim(), descricao: descricao.trim(), status});
-            saveSystemData(state);
+            // ENVIA PARA A API NO C# (MYSQL GERA O ID AUTO-INCREMENTADO):
+            const novoProjeto = {
+                nome: nome.trim(),
+                descricao: descricao.trim(),
+                statusTag: status
+            };
+
+            // ENVIA PARA O MYSQL VIA C#:
+            await salvarProjetosAPI(novoProjeto);
+
+            // RECARREGA OS DADOS DO MYSQL PARA OBTER O ESTADO ATUALIZADO COM OS IDS REAIS DO BANCO:
+            state = await loadSystemData();
             renderSystem();
             return;
         }
@@ -521,18 +530,18 @@ function attachEventListeners() {
             });
             if (novoStatus === null) return;
 
-            const nomeAntigo = proj.nome;
-            state.projetos[idx] = {...proj, nome: novoNome.trim() || proj.nome, descricao: descricao.trim(), status};
+            const projAtualizado = {
+                id: proj.id,
+                nome: novoNome.trim() || proj.nome,
+                descricao: novaDescricao.trim(),
+                statusTag: novoStatus
+            };
 
-            if (state.perfil?.focoAtual?.titulo === nomeAntigo) {
-                state.perfil.focoAtual = {
-                    titulo: state.projetos[idx].nome,
-                    descricao: state.projetos[idx].descricao,
-                    statusTag: state.projetos[idx].status
-                };
-            }
+            // ENVIA ATUALIZAÇÃO (PUT) PARA O MYSQL:
+            await salvarProjetosAPI(projAtualizado);
 
-            saveSystemData(state);
+            // RECARREGA OS DADOS ATUALIZADOS DO BANCO:
+            state = await loadSystemData();
             renderSystem();
             return;
         }
@@ -552,12 +561,13 @@ function attachEventListeners() {
             });
 
             if (confirmou) {
-                if (state.perfil?.focoAtual?.titulo === projDeletado.nome) {
-                    delete state.perfil.focoAtual;
+                // SE O PROJETO TIVER ID NO BANCO, CHAMA A ROTA DE DELETE:
+                if (projDeletado.id) {
+                    await deletarProjetoAPI(projDeletado.id);
                 }
 
-                state.projetos.splice(idx, 1);
-                saveSystemData(state);
+                // RECARREGA OS DADOS ATUALIZADOS DO BANCO;
+                state = await loadSystemData();
                 renderSystem();
             }
             return;
