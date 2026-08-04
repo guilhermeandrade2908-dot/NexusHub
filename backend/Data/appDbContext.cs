@@ -10,5 +10,6 @@ namespace Backend.Data
 
         public DbSet<Perfil> Perfis {get; set;}
         public DbSet<Projeto> Projetos {get; set;}
+        public DbSet<Estudo> Estudos {get; set;}
     }
 }
