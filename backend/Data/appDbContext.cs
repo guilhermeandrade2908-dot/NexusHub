@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Backend.Models;
+using backend.Models;
 
 namespace Backend.Data
 {
@@ -8,5 +9,6 @@ namespace Backend.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<Perfil> Perfis {get; set;}
+        public DbSet<Projeto> Projetos {get; set;}
     }
 }
