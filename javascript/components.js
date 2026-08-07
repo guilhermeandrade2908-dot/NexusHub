@@ -62,7 +62,7 @@ export function renderPerfilPage(perfil = {}, systemStatus = 'Online') {
                     </div>
                     <div>
                         <h2 style="margin: 0;">${nome}</h2>
-                        <p style="margin: 4px 0; color: #00e5ff;">${cargo} • <span style="color: ${statusCor}; font-weight: 600;">${statusTxt}</span></p>
+                        <p style="margin: 4px 0; color: #00e5ff;">${cargo} • <span id="btn-change-status" style="color: ${statusCor}; font-weight: 600; cursor: pointer;" title="Clique para alterar status">${statusTxt}</span></p>
                     </div>
                 </div>
                 <div style="margin-bottom: 20px;">

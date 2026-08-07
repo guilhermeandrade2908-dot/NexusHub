@@ -123,7 +123,7 @@ export async function loadSystemData() {
         estudos: estudosFinais,
         metas: Array.isArray(metasAPI) ? metasAPI : (localData.metas || metasIniciais),
         lazer: lazerFinal,
-        systemStatus: localData.systemStatus || 'Online'
+        systemStatus: perfilAPI?.status || localData.systemStatus || 'Online'
     };
 
     saveSystemData(state);

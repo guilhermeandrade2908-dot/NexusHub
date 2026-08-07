@@ -907,8 +907,13 @@ function attachEventListeners() {
 
             if (novoStatus) {
                 state.systemStatus = novoStatus;
+                if (!state.perfil) state.perfil = {};
+                state.perfil.status = novoStatus;
+
                 saveSystemData(state);
                 renderSystem();
+
+                await salvarPerfilAPI(state.perfil);
             }
             return;
         }

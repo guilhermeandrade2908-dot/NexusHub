@@ -7,7 +7,7 @@ namespace backend.Models
         public string Nome {get; set;} = string.Empty;
         public string Cargo {get; set;} = string.Empty;
         public string Bio {get; set;} = string.Empty;
-        public string StatusSistema {get; set;} = "Online";
+        public string Status {get; set;} = "Online";
         public DateTime AtualizadoEm {get; set;} = DateTime.UtcNow;
     }
 }

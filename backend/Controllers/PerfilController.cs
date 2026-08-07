@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Data;
 using backend.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Backend.Controllers
 {
@@ -54,13 +55,13 @@ namespace Backend.Controllers
             perfil.Nome = perfilDto.Nome;
             perfil.Bio = perfilDto.Bio;
             perfil.Cargo = perfilDto.Cargo;
-            perfil.atualizadoEm = DateTime.UtcNow;
+            perfil.Status = perfilDto.Status;
+            perfil.AtualizadoEm = DateTime.UtcNow;
 
             // PERSISTE AS ALTERAÇÕES NO BANCO DE DADOS VIA ENTITY FRAMEWORK:
             await _context.SaveChangesAsync();
 
             return Ok(perfil);
         }
-
     }
 }
