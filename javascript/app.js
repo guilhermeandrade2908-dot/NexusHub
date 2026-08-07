@@ -259,8 +259,8 @@ function attachEventListeners() {
                 return;
             }
 
-            const opcoes = projetos.map((p, idx) => ({
-                value: String(idx),
+            const opcoes = projetos.map((p) => ({
+                value: String(p.id),
                 label: `${p.nome} (${p.statusTag || 'Sem status'})`
             }));
 
@@ -271,15 +271,16 @@ function attachEventListeners() {
             });
             
             if (escolha !== null && escolha !== undefined) {
-                const proj = projetos[Number(escolha)];
+                const proj = projetos.find(
+                    p => p.id === Number(escolha)
+                );
                 if (proj) {
                     if (!state.perfil) state.perfil = {};
-                    state.perfil.focoAtual = {
-                        titulo: proj.nome,
-                        descricao: proj.descricao,
-                        statusTag: proj.statusTag
-                    };
-                    saveSystemData(state);
+                    state.perfil.projetoFocoId = proj.id;
+
+                    await salvarPerfilAPI(state.perfil);
+                    
+                    state = await loadSystemData();
                     renderSystem();
                 }
             }

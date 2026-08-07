@@ -13,5 +13,15 @@ namespace backend.Data
         public DbSet<Meta> Metas {get; set;}
         public DbSet<Lazer> Lazeres {get; set;}
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Perfil>()
+                .HasOne(p => p.ProjetoFoco)
+                .WithMany()
+                .HasForeignKey(p => p.ProjetoFocoId)
+                .OnDelete(DeleteBehavior.SetNull);
+        }
     }
 }

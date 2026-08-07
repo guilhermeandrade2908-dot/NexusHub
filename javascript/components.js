@@ -17,11 +17,11 @@ function isSafeUrl(url) {
 
 // RENDER DO CARD DE FOCO NO DASHBOARD
 export function renderPerfilCard(perfil = {}, projetos = []) {
-    const foco = perfil.focoAtual || null;
+    const foco = perfil.projetoFoco || null;
 
-    const temFoco = Boolean(foco && foco.titulo);
+    const temFoco = Boolean(foco && foco.nome);
     const statusTag = temFoco ? escapeHTML(foco.statusTag || 'Em Andamento') : '';
-    const titulo = temFoco ? escapeHTML(foco.titulo) : 'Nenhum Projeto Selecionado';
+    const titulo = temFoco ? escapeHTML(foco.nome) : 'Nenhum Projeto Selecionado';
     const descricao = temFoco ? escapeHTML(foco.descricao) : 'Selecione um projeto para ser o seu Foco Atual.';
 
     return `<div class="card card-perfil">

@@ -21,7 +21,7 @@ namespace Backend.Controllers
         [HttpGet]
         public async Task<ActionResult<Perfil>> GetPerfil()
         {
-            var perfil = await _context.Perfis.FirstOrDefaultAsync();
+            var perfil = await _context.Perfis.Include(p => p.ProjetoFoco).FirstOrDefaultAsync();
 
             // SE FOR O PRIMEIRO ACESSO E A TABELA ESTIVER VAZIA, CRIA UM USUÁRIO INICIAL:
             if (perfil == null)
@@ -51,11 +51,12 @@ namespace Backend.Controllers
                 return NotFound(new {message = "Perfil não encontrado no banco de dados."});
             }
 
-            // ATUALIZA OS DADOS NO ONJETO C#:
+            // ATUALIZA OS DADOS NO OBJETO C#:
             perfil.Nome = perfilDto.Nome;
             perfil.Bio = perfilDto.Bio;
             perfil.Cargo = perfilDto.Cargo;
             perfil.Status = perfilDto.Status;
+            perfil.ProjetoFocoId = perfilDto.ProjetoFocoId;
             perfil.AtualizadoEm = DateTime.UtcNow;
 
             // PERSISTE AS ALTERAÇÕES NO BANCO DE DADOS VIA ENTITY FRAMEWORK:

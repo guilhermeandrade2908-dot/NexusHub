@@ -8,6 +8,8 @@ namespace backend.Models
         public string Cargo {get; set;} = string.Empty;
         public string Bio {get; set;} = string.Empty;
         public string Status {get; set;} = "Online";
+        public int? ProjetoFocoId {get; set;}
+        public Projeto? ProjetoFoco {get; set;}
         public DateTime AtualizadoEm {get; set;} = DateTime.UtcNow;
     }
 }
