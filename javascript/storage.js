@@ -89,9 +89,11 @@ export async function loadSystemData() {
             horasHoje: primeiroRegistro.horasHoje ?? estudosFinais.horasHoje ?? 0,
             horasTotais: primeiroRegistro.horasTotais ?? estudosFinais.horasTotais ?? 0,
             metasHorasSemanal: primeiroRegistro.metaHorasSemanal ?? estudosFinais.metasHorasSemanal ?? 0,
+            
             materias: materiasConvertidas,
-            ultimoReset: localData.estudos?.ultimoReset || null,
-            ultimoResetSemana: localData.estudos?.ultimoResetSemana || null
+           
+            ultimoReset: primeiroRegistro.ultimoReset ?? null,
+            ultimoResetSemana: primeiroRegistro.ultimoResetSemana ?? null
         };
     }
 

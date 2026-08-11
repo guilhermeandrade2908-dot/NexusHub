@@ -17,5 +17,9 @@ namespace backend.Models
         public double MetaHorasSemanal {get; set;} = 0;
 
         public DateTime UltimaAtualizacao {get; set;} = DateTime.UtcNow;
+
+        public DateTime? UltimoReset {get; set;}
+
+        public DateTime? UltimoResetSemanal {get; set;}
     }
 }
