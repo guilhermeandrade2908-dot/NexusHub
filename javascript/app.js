@@ -117,54 +117,100 @@ function startClock() {
     setInterval(update, 1000);
 }
 
+// FUNÇÃO AUXILIAR QUE FORMATA A DATA LOCAL COMO ANO, MÊS E DIA:
+function formatarDataLocal(data) {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+
+    return `${ano}-${mes}-${dia}`;
+}
+
+// FUNÇÃO QUE DETERMINA O CICLO DIÁRIO DE ESTUDOS:
+function obterCicloDiario() {
+    const agora = new Date();
+    const ciclo = new Date(agora);
+
+    // Antes das 05:00, ainda pertence ao ciclo do dia anterior:
+    if (agora.getHours() < 5) {
+        ciclo.setDate(ciclo.getDate() - 1);
+    }
+
+    return formatarDataLocal(ciclo);
+}
+
+// FUNÇÃO QUE DETERMINA O CICLO SEMANAL DE ESTUDOS:
+function obterCicloSemanal() {
+    const agora = new Date();
+    const ciclo = new Date(agora);
+
+    // Antes das 05:00, ainda pertence ao ciclo do dia anterior:
+    if (agora.getHours() < 5) {
+        ciclo.setDate(ciclo.getDate() - 1);
+    }
+
+    const diaSemana = ciclo.getDay();
+
+    // Domingo = 0 | Segunda = 1:
+    const diasDesdeSegunda = diaSemana === 0 ? 6 : diaSemana - 1;
+
+    ciclo.setDate(ciclo.getDate() - diasDesdeSegunda);
+
+    return formatarDataLocal(ciclo);
+}
+
 // FUNÇÃO QUE CHECA E DÁ O RESET DE HORAS DIARIAS E SEMANAIS DO SISTEMA:
-function checkAndResetHorasDiarias(state) {
+async function checkAndResetHorasDiarias(state) {
     if (!state.estudos) state.estudos = {};
 
-    const agora = new Date();
-    const horasAtual = agora.getHours();
+    const cicloAtual = obterCicloDiario();
+    const cicloSemanalAtual = obterCicloSemanal();
 
-    // DETERMINA A DATA DE CICLO DE ESTUDO ATUAL:
-    const dataCiclo = new Date(agora);
-    // SE AINDA NÃO FOR 5H DA MANHÃ, O CICLO ATUAL "PERTENCE" AO DIA DE ONTEM:
-    if (horasAtual < 5) {
-        dataCiclo.setDate(dataCiclo.getDate() - 1);
-    }
+    const ultimoReset = state.estudos.ultimoReset ? String(state.estudos.ultimoReset).split('T')[0] : null;
+    const ultimoResetSemanal = state.estudos.ultimoResetSemanal ? String(state.estudos.ultimoResetSemanal).split('T')[0] : null;
 
-    // FORMATA COMO ANO-MES-DIA PARA GUARDAR APENAS O DIA DO CICLO:
-    const cicloString = dataCiclo.toISOString().split('T')[0];
-    const ultimoReset = state.estudos.ultimoReset;
+    let houveAlteracao = false;
 
-    // SE O CICLO ATUAL FOR DIFERENTE DO ÚLTIMO RESET REGISTRADO, ZERAMOS:
-    if (ultimoReset !== cicloString) {
+    // Reset diário:
+    if (ultimoReset !== cicloAtual) {
         state.estudos.horasHoje = 0;
-        state.estudos.ultimoReset = cicloString;
-        saveSystemData(state);
+        state.estudos.ultimoReset = cicloAtual;
+
+        houveAlteracao = true;
     }
 
-    // RESET SEMANAL (SEGUNDA-FEIRA):
-    const diaDaSemana = dataCiclo.getDay();
-    const ultimoResetSemana = state.estudos.ultimoResetSemana;
-
-    if (diaDaSemana === 1 && ultimoResetSemana !== cicloString) {
+    // Reset semanal:
+    if (ultimoResetSemanal !== cicloSemanalAtual) {
         state.estudos.horasTotais = 0;
-        state.estudos.ultimoResetSemana = cicloString;
-        saveSystemData(state);
+        state.estudos.ultimoResetSemanal = cicloSemanalAtual;
 
-        // Atualiza o banco junto com o reset semanal:
-        const primeiraMateria = state.estudos.materias?.[0];
-        if (primeiraMateria?.id) {
-            salvarEstudosAPI({
-                id: primeiraMateria.id,
-                materia: primeiraMateria.nome,
-                horasHoje: 0,
-                horasTotais: 0,
-                metaHorasSemanal: Number(state.estudos.metasHorasSemanal) || 0,
-                ultimaAtualizacao: new Date().toISOString()
-            });
-        }
+        houveAlteracao = true;
     }
-}
+
+    if (!houveAlteracao) {
+        return;
+    }
+
+    // Salva localmente:
+    saveSystemData(state);
+
+    // Salva no banco:
+    const primeiraMateria = state.estudos.materias?.[0];
+
+    if (primeiraMateria?.id) {
+        await salvarEstudosAPI({
+            id: primeiraMateria.id,
+            materia: primeiraMateria.nome,
+            progresso: Number(primeiraMateria.progresso) || 0,
+            horasHoje: state.estudos.horasHoje,
+            horasTotais: state.estudos.horasTotais,
+            metaHorasSemanal: Number(state.estudos.metasHorasSemanal) || 0,
+            ultimaAtualizacao: new Date().toISOString(),
+            ultimoReset: state.estudos.ultimoReset,
+            ultimoResetSemanal: state.estudos.ultimoResetSemanal,
+        });
+    }
+ }
 
 // FUNÇÃO QUE ATUALIZA A MUDANÇA AO CLICAR EM UM ELEMENTO DA SIDEBAR:
 function switchView(viewName) {
@@ -346,7 +392,9 @@ function attachEventListeners() {
             horasHoje: Number(state.estudos.horasHoje) || 0,
             horasTotais: Number(state.estudos.horasTotais) || 0,
             metaHorasSemanal: Number(state.estudos.metaHorasSemanal || state.estudos.metasHorasSemanal) || 0,
-            ultimaAtualizacao: new Date().toISOString()
+            ultimaAtualizacao: new Date().toISOString(),
+            ultimoReset: state.estudos.ultimoReset,
+            ultimoResetSemanal: state.estudos.ultimoResetSemanal
         };
 
         const retBackend = await salvarEstudosAPI(payloadBackend);
@@ -395,7 +443,9 @@ function attachEventListeners() {
                 horasHoje: Number(state.estudos.horasHoje) || 0,
                 horasTotais: Number(state.estudos.horasTotais) || 0,
                 metaHorasSemanal: Number(state.estudos.metaHorasSemanal || state.estudos.metasHorasSemanal) || 0,
-                ultimaAtualizacao: new Date().toISOString()
+                ultimaAtualizacao: new Date().toISOString(),
+                ultimoReset: state.estudos.ultimoReset,
+                ultimoResetSemanal: state.estudos.ultimoResetSemanal
             });
         }
 
@@ -495,7 +545,9 @@ function attachEventListeners() {
                     horasHoje: novasHorasHoje,
                     horasTotais: state.estudos.horasTotais,
                     metaHorasSemanal: Number(state.estudos.metaHorasSemanal || state.estudos.metasHorasSemanal) || 0,
-                    ultimaAtualizacao: new Date().toISOString()
+                    ultimaAtualizacao: new Date().toISOString(),
+                    ultimoReset: state.estudos.ultimoReset,
+                    ultimoResetSemanal: state.estudos.ultimoResetSemanal
                 });
             }
 
@@ -529,7 +581,9 @@ function attachEventListeners() {
                     horasHoje: Number(state.estudos.horasHoje) || 0,
                     horasTotais: Number(state.estudos.horasTotais) || 0,
                     metaHorasSemanal: numMeta,
-                    ultimaAtualizacao: new Date().toISOString()
+                    ultimaAtualizacao: new Date().toISOString(),
+                    ultimoReset: state.estudos.ultimoReset,
+                    ultimoResetSemanal: state.estudos.ultimoResetSemanal
                 });
             }
             
@@ -927,7 +981,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     state = await loadSystemData();
     
     // EXECUTA AS VERIFICAÇÕES E RENDERIZAÇÃO INICIAL:
-    checkAndResetHorasDiarias(state);
+    await checkAndResetHorasDiarias(state);
     startClock();
     renderSystem();
     attachEventListeners();
@@ -937,6 +991,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.addEventListener('focus', async () => {
     // RECARREGA O ESTADO ATUALIZADO CASO TENHA HAVIDO MUDANÇAS:
     state = await loadSystemData();
-    checkAndResetHorasDiarias(state);
+    await checkAndResetHorasDiarias(state);
     renderSystem();
 });

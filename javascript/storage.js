@@ -92,8 +92,8 @@ export async function loadSystemData() {
             
             materias: materiasConvertidas,
            
-            ultimoReset: primeiroRegistro.ultimoReset ?? null,
-            ultimoResetSemana: primeiroRegistro.ultimoResetSemana ?? null
+            ultimoReset: primeiroRegistro.ultimoReset ? primeiroRegistro.ultimoReset.split('T')[0] : null,
+            ultimoResetSemanal: primeiroRegistro.ultimoResetSemanal ? primeiroRegistro.ultimoResetSemanal.split('T')[0] : null
         };
     }
 
