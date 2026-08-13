@@ -72,28 +72,40 @@ export async function loadSystemData() {
     const perfilAPI = await fetchAPI('perfil');
     const projetosAPI = await fetchAPI('projetos');
     const estudosAPI = await fetchAPI('estudos');
+    const estudosGlobalAPI = await fetchAPI('estudoglobal');
     const metasAPI = await carregarMetasAPI();
     const lazerAPI = await fetchAPI('lazer');
 
     // Unifica os estudos do banco com a estrutura do frontend
     let estudosFinais = localData.estudos || estudosIniciais;
-    if (Array.isArray(estudosAPI) && estudosAPI.length > 0) {
-        const materiasConvertidas = estudosAPI.map(e => ({
+    
+    const materiasConvertidas = Array.isArray(estudosAPI) 
+        ? estudosAPI.map(e => ({
             id: e.id,
             nome: e.materia || e.nome || 'Sem nome',
-            progresso: e.progresso ?? 0
-        }));
+            progresso: e.progresso ?? 0,
+            horasHoje: e.horasHoje ?? 0,
+            horasTotais: e.horasTotais ?? 0
+        }))
+        : [];
 
-        const primeiroRegistro = estudosAPI[0];
+    if (estudosGlobalAPI) {
         estudosFinais = {
-            horasHoje: primeiroRegistro.horasHoje ?? estudosFinais.horasHoje ?? 0,
-            horasTotais: primeiroRegistro.horasTotais ?? estudosFinais.horasTotais ?? 0,
-            metasHorasSemanal: primeiroRegistro.metaHorasSemanal ?? estudosFinais.metasHorasSemanal ?? 0,
-            
-            materias: materiasConvertidas,
-           
-            ultimoReset: primeiroRegistro.ultimoReset ? primeiroRegistro.ultimoReset.split('T')[0] : null,
-            ultimoResetSemanal: primeiroRegistro.ultimoResetSemanal ? primeiroRegistro.ultimoResetSemanal.split('T')[0] : null
+            idGlobal: estudosGlobalAPI.id ?? null, 
+
+            horasHoje: estudosGlobalAPI.horasHoje ?? 0,
+            horasTotais: estudosGlobalAPI.horasTotais ?? 0,
+            metaHorasSemanal: estudosGlobalAPI.metaHorasSemanal ?? 0,
+
+            ultimoReset: estudosGlobalAPI.ultimoReset ?? null,
+            ultimoResetSemanal: estudosGlobalAPI.ultimoResetSemanal ?? null,
+
+            materias: materiasConvertidas
+        };
+    } else {
+        estudosFinais = {
+            ...estudosFinais,
+            materias: materiasConvertidas
         };
     }
 
@@ -170,6 +182,21 @@ export async function deletarEstudosAPI(id) {
     } catch (e) {
         console.warn(`[API Offline] Não foi possível deletar estudo ${id}`, e);
     }
+}
+
+// INTEGRAÇÕES COM API - ESTUDO GLOBAL
+export async function carregarEstudoGlobalAPI() {
+    return await fetchAPI('estudoglobal');
+}
+
+export async function salvarEstudoGlobalAPI(global) {
+    if (!global?.id) {
+        console.error('salvarEstudoGlobalAPI: estudo global sem "id".');
+
+        return null;
+    }
+
+    return await sendAPI(`estudoglobal/${global.id}`, 'PUT', global);
 }
 
 // INTEGRAÇÕES COM API - METAS
