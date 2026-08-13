@@ -1,6 +1,6 @@
 // APP.JS - CONTROLLER GERAL
 
-import {loadSystemData, saveSystemData, salvarPerfilAPI, salvarProjetosAPI, deletarProjetoAPI, salvarEstudosAPI, deletarEstudosAPI, carregarMetasAPI, salvarMetasAPI, deletarMetaAPI, carregarLazerAPI, salvarLazerAPI, deletarLazerAPI} from './storage.js';
+import {loadSystemData, saveSystemData, salvarPerfilAPI, salvarProjetosAPI, deletarProjetoAPI, salvarEstudosAPI, deletarEstudosAPI, carregarMetasAPI, salvarMetasAPI, deletarMetaAPI, carregarLazerAPI, salvarLazerAPI, deletarLazerAPI, salvarEstudoGlobalAPI} from './storage.js';
 import {
     renderPerfilCard,
     renderPerfilPage,
@@ -194,20 +194,15 @@ async function checkAndResetHorasDiarias(state) {
     // Salva localmente:
     saveSystemData(state);
 
-    // Salva no banco:
-    const primeiraMateria = state.estudos.materias?.[0];
-
-    if (primeiraMateria?.id) {
-        await salvarEstudosAPI({
-            id: primeiraMateria.id,
-            materia: primeiraMateria.nome,
-            progresso: Number(primeiraMateria.progresso) || 0,
+    // Salva os dados globais no banco:
+    if (state.estudos.idGlobal) {
+        await salvarEstudoGlobalAPI({
+            id: state.estudos.idGlobal,
             horasHoje: state.estudos.horasHoje,
             horasTotais: state.estudos.horasTotais,
-            metaHorasSemanal: Number(state.estudos.metasHorasSemanal) || 0,
-            ultimaAtualizacao: new Date().toISOString(),
+            metaHorasSemanal: Number(state.estudos.metaHorasSemanal) || 0,
             ultimoReset: state.estudos.ultimoReset,
-            ultimoResetSemanal: state.estudos.ultimoResetSemanal,
+            ultimoResetSemanal: state.estudos.ultimoResetSemanal
         });
     }
  }
@@ -500,61 +495,146 @@ function attachEventListeners() {
 
         if (!opcao) return;
 
-        let novasHorasHoje = horasHojeAntigo;
-
+        // SOMAR HORAS:
         if (opcao === '1') {
+            const materias = Array.isArray(state.estudos.materias) ? state.estudos.materias : [];
+
+            if (materias.length === 0) {
+                await customModal({
+                    title: 'Nenhuma matéria',
+                    message: 'Cadastre uma matéria antes de adicionar horas de estudo.',
+                    isConfirm: true
+                });
+
+                return;
+            }
+
             const inputAdd = await customModal({
                 title: 'Somar Horas',
                 message: 'Quantas horas você estudou hoje?',
                 defaultValue: '1',
                 type: 'number'
             });
+
             const numAdd = Number(inputAdd);
 
-            if (inputAdd !== null && !isNaN(numAdd) && numAdd > 0) {
-                novasHorasHoje = horasHojeAntigo + numAdd;
+            if (inputAdd === null || isNaN(numAdd) || numAdd <= 0) {
+                return;
             }
-        } else if (opcao === '2') {
+
+            // Escolher a matéria:
+            const opcoesMaterias = materias.map((materia, index) => ({
+                value: String(index),
+                label: materia.nome
+            }));
+
+            const escolhaMateria = await customModal({
+                title: 'Escolher Matéria',
+                message: 'Em qual matéria você estudou?',
+                options: opcoesMaterias
+            });
+
+            if (escolhaMateria === null || escolhaMateria === undefined) {
+                return;
+            }
+
+            const materia = materias[Number(escolhaMateria)];
+
+            if (!materia) {
+                return;
+            }
+
+            // ATUALIZA A MATÉRIA:
+            materia.horasHoje = (Number(materia.horasHoje) || 0) + numAdd;
+
+            materia.horasTotais = (Number(materia.horasTotais) || 0) + numAdd;
+
+            // ATUALIZA O GLOBAL:
+            state.estudos.horasHoje = horasHojeAntigo + numAdd;
+
+            const totalSemanalAntigo = Number(state.estudos.horasTotais) || 0;
+
+            state.estudos.horasTotais = totalSemanalAntigo + numAdd;
+
+            // SALVA A MATÉRIA:
+            if (materia.id) {
+                await salvarEstudosAPI({
+                    id: materia.id,
+                    materia: materia.nome,
+                    progresso: Number(materia.progresso) || 0,
+                    horasHoje: materia.horasHoje,
+                    horasTotais: materia.horasTotais,
+                    ultimaAtualizacao: new Date().toISOString()
+                });
+            }
+
+            // SALVA O GLOBAL:
+            if (state.estudos.idGlobal) {
+                await salvarEstudoGlobalAPI({
+                    id: state.estudos.idGlobal,
+                    horasHoje: state.estudos.horasHoje,
+                    horasTotais: state.estudos.horasTotais,
+                    metaHorasSemanal: Number(state.estudos.metaHorasSemanal) || 0,
+                    ultimoReset: state.estudos.ultimoReset,
+                    ultimoResetSemanal: state.estudos.ultimoResetSemanal
+                });
+            }
+
+            // Salva localmente:
+            saveSystemData(state);
+
+            // Recarrega do banco para manter o frontend sincronizado:
+            state = await loadSystemData();
+            renderSystem();
+            return;
+        }
+        
+        // REDEFINIR HORAS DO DIA:
+        if (opcao === '2') {
             const inputHoje = await customModal({
                 title: 'Redefinir Horas de Hoje',
                 message: 'Digite o novo valor total de horas para HOJE:',
                 defaultValue: horasHojeAntigo,
                 type: 'number'
             });
+
             const numHoje = Number(inputHoje);
 
-            if (inputHoje !== null && !isNaN(numHoje) && numHoje >= 0) {
-                novasHorasHoje = numHoje;
+            if (inputHoje === null || isNaN(numHoje) || numHoje < 0) {
+                return;
             }
-        }
 
-        if (novasHorasHoje !== horasHojeAntigo) {
-            const diff = novasHorasHoje - horasHojeAntigo;
+            // Diferença entre o valor antigo e o novo:
+            const diff = numHoje - horasHojeAntigo;
 
-            state.estudos.horasHoje = novasHorasHoje;
+            // Atualiza o total diário global:
+            state.estudos.horasHoje = numHoje;
 
+            // Ajusta também o total semanal global:
             const totalSemanalAntigo = Number(state.estudos.horasTotais) || 0;
+
             state.estudos.horasTotais = Math.max(0, totalSemanalAntigo + diff);
 
-            const primeiraMateria = state.estudos.materias?.[0];
-            if (primeiraMateria?.id) {
-                await salvarEstudosAPI({
-                    id: primeiraMateria.id,
-                    materia: primeiraMateria.nome,
-                    progresso: Number(primeiraMateria.progresso) || 0,
-                    horasHoje: novasHorasHoje,
+            // SALVA O GLOBAL:
+            if (state.estudos.idGlobal) {
+                await salvarEstudoGlobalAPI({
+                    id: state.estudos.idGlobal,
+                    horasHoje: state.estudos.horasHoje,
                     horasTotais: state.estudos.horasTotais,
-                    metaHorasSemanal: Number(state.estudos.metaHorasSemanal || state.estudos.metasHorasSemanal) || 0,
-                    ultimaAtualizacao: new Date().toISOString(),
+                    metaHorasSemanal: Number(state.estudos.metaHorasSemanal) || 0,
                     ultimoReset: state.estudos.ultimoReset,
                     ultimoResetSemanal: state.estudos.ultimoResetSemanal
                 });
             }
 
+            // Salva localmente:
             saveSystemData(state);
+
+            // Recarreg os dados do banco:
+            state = await loadSystemData();
             renderSystem();
+            return;
         }
-        return;
     }
 
     if (target.closest('#btn-edit-meta-horas')) {
