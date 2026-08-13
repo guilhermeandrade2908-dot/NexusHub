@@ -27,6 +27,9 @@ namespace backend.Controllers
         [HttpPost]
         public async Task<ActionResult<Estudo>> PostEstudo(Estudo estudo)
         {
+            
+            estudo.UltimaAtualizacao = DateTime.UtcNow;
+            
             _context.Estudos.Add(estudo);
             await _context.SaveChangesAsync();
 
@@ -39,19 +42,19 @@ namespace backend.Controllers
         {
             if (id != estudo.Id) return BadRequest();
 
-            _context.Entry(estudo).State = EntityState.Modified;
+            var estudoExistente = await _context.Estudos.FindAsync(id);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EstudosExists(id)) return NotFound();
-                throw;
-            }
+            if (estudoExistente == null) return NotFound();
 
-            return NoContent();
+            estudoExistente.Materia = estudo.Materia;
+            estudoExistente.Progresso = estudo.Progresso;
+            estudoExistente.HorasHoje = estudo.HorasHoje;
+            estudoExistente.HorasTotais = estudo.HorasTotais;
+            estudoExistente.UltimaAtualizacao = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(estudoExistente);
         }
 
         // DELETE;
@@ -65,11 +68,6 @@ namespace backend.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool EstudosExists(int id)
-        {
-            return _context.Estudos.Any(e => e.Id == id);
         }
     }
 }
