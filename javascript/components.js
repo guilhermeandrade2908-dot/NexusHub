@@ -105,7 +105,7 @@ export function renderEstudosCard(estudos = {}) {
     // CARDS DE HORAS DIARIAS, TOTAIS E META SEMANAL:
     const horasHoje = Number(estudos.horasHoje) || 0;
     const horasTotais = Number(estudos.horasTotais) || 0;
-    const metaSemanal = Number(estudos.metasHorasSemanal || estudos.metasHorasSemanais) || 0;
+    const metaSemanal = Number(estudos.metaHorasSemanal) || 0;
 
     return `
         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
