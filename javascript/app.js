@@ -659,7 +659,8 @@ function attachEventListeners() {
     }
 
     if (target.closest('#btn-edit-meta-horas')) {
-        const atual = state.estudos?.metaHorasSemanal || state.estudos?.metasHorasSemanal || 0;
+        const atual = state.estudos?.metaHorasSemanal || 0;
+        
         const novaMeta = await customModal({
             title: 'Meta Semanal de Horas',
             message: 'Digite a sua nova meta semanal em horas:',
@@ -668,29 +669,31 @@ function attachEventListeners() {
         });
 
         const numMeta = Number(novaMeta);
+        
         if (novaMeta !== null && !isNaN(numMeta) && numMeta >= 0) {
             if (!state.estudos) state.estudos = {};
             state.estudos.metaHorasSemanal = numMeta;
-            state.estudos.metasHorasSemanal = numMeta;
             
-            const primeiraMateria = state.estudos.materias?.[0];
-            if (primeiraMateria?.id) {
-                await salvarEstudosAPI({
-                    id: primeiraMateria.id,
-                    materia: primeiraMateria.nome,
-                    progresso: Number(primeiraMateria.progresso) || 0, 
+            // Salva a Meta no Estudo Global:
+            if (state.estudos.idGlobal) {
+                await salvarEstudoGlobalAPI({
+                    id: state.estudos.idGlobal,
                     horasHoje: Number(state.estudos.horasHoje) || 0,
                     horasTotais: Number(state.estudos.horasTotais) || 0,
                     metaHorasSemanal: numMeta,
-                    ultimaAtualizacao: new Date().toISOString(),
                     ultimoReset: state.estudos.ultimoReset,
                     ultimoResetSemanal: state.estudos.ultimoResetSemanal
                 });
             }
             
+            // Salva Localmente:
             saveSystemData(state);
+            
+            // Recarrega os dados do banco:
+            state = await loadSystemData();
             renderSystem();
         }
+        
         return;
     }
 
