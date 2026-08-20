@@ -169,32 +169,50 @@ async function checkAndResetHorasDiarias(state) {
     const ultimoReset = state.estudos.ultimoReset ? String(state.estudos.ultimoReset).split('T')[0] : null;
     const ultimoResetSemanal = state.estudos.ultimoResetSemanal ? String(state.estudos.ultimoResetSemanal).split('T')[0] : null;
 
-    let houveAlteracao = false;
+    // Controla cada tipo de reset separadamente:
+    const precisaResetDiario = ultimoReset !== cicloAtual;
+    const precisaResetSemanal = ultimoResetSemanal !== cicloSemanalAtual;
 
-    // Reset diário:
-    if (ultimoReset !== cicloAtual) {
+    // Se nenhum ciclo mudou, não faz nada:
+    if (!precisaResetDiario && !precisaResetSemanal) return;
+
+    // === Reset do Estudo Global ===
+    if (precisaResetDiario) {
         state.estudos.horasHoje = 0;
         state.estudos.ultimoReset = cicloAtual;
-
-        houveAlteracao = true;
     }
 
-    // Reset semanal:
-    if (ultimoResetSemanal !== cicloSemanalAtual) {
+    if (precisaResetSemanal) {
         state.estudos.horasTotais = 0;
         state.estudos.ultimoResetSemanal = cicloSemanalAtual;
-
-        houveAlteracao = true;
     }
 
-    if (!houveAlteracao) {
-        return;
+    // === Reset das Matérias ===
+    const materias = Array.isArray(state.estudos.materias) ? state.estudos.materias : [];
+
+    for (const materia of materias) {
+        if (precisaResetDiario) {
+            materia.horasHoje = 0;
+        }
+
+        if (precisaResetSemanal) {
+            materia.horasTotais = 0;
+        }
+
+        // Salva a matéria atualizada no banco:
+        if (materia.id) {
+            await salvarEstudosAPI({
+                id: materia.id,
+                materia: materia.nome,
+                progresso: Number(materia.progresso) || 0,
+                horasHoje: Number(materia.horasHoje) || 0,
+                horasTotais: Number(materia.horasTotais) || 0,
+                ultimaAtualizacao: new Date().toISOString()
+            });
+        }
     }
 
-    // Salva localmente:
-    saveSystemData(state);
-
-    // Salva os dados globais no banco:
+    // === Salva o Global ===
     if (state.estudos.idGlobal) {
         await salvarEstudoGlobalAPI({
             id: state.estudos.idGlobal,
@@ -205,7 +223,10 @@ async function checkAndResetHorasDiarias(state) {
             ultimoResetSemanal: state.estudos.ultimoResetSemanal
         });
     }
- }
+
+    // Salva Localmente ===
+    saveSystemData(state);
+}
 
 // FUNÇÃO QUE ATUALIZA A MUDANÇA AO CLICAR EM UM ELEMENTO DA SIDEBAR:
 function switchView(viewName) {
