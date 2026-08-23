@@ -195,81 +195,82 @@ function obterCicloSemanal() {
 
 // FUNÇÃO QUE CHECA E DÁ O RESET DE HORAS DIARIAS E SEMANAIS DO SISTEMA:
 async function checkAndResetHorasDiarias(state) {
-  if (!state.estudos) state.estudos = {};
 
-  const cicloAtual = obterCicloDiario();
-  const cicloSemanalAtual = obterCicloSemanal();
+    if (!state.estudos) state.estudos = {};
 
-  const ultimoReset = state.estudos.ultimoReset
-    ? String(state.estudos.ultimoReset).split("T")[0]
-    : null;
-  const ultimoResetSemanal = state.estudos.ultimoResetSemanal
-    ? String(state.estudos.ultimoResetSemanal).split("T")[0]
-    : null;
+    const cicloAtual = obterCicloDiario();
+    const cicloSemanalAtual = obterCicloSemanal();
 
-  // Controla cada tipo de reset separadamente:
-  const precisaResetDiario = ultimoReset !== cicloAtual;
-  const precisaResetSemanal = ultimoResetSemanal !== cicloSemanalAtual;
+    const ultimoReset = state.estudos.ultimoReset
+        ? String(state.estudos.ultimoReset).split('T')[0]
+        : null;
 
-  // Se nenhum ciclo mudou, não faz nada:
-  if (!precisaResetDiario && !precisaResetSemanal) return;
+    const ultimoResetSemanal = state.estudos.ultimoResetSemanal
+        ? String(state.estudos.ultimoResetSemanal).split('T')[0]
+        : null;
 
-  // === Reset das Matérias ===
-  if (precisaResetDiario) {
-    for (const materia of materias) {
-      materia.horasHoje = 0;
+    const precisaResetDiario = ultimoReset !== cicloAtual;
+    const precisaResetSemanal = ultimoResetSemanal !== cicloSemanalAtual;
+
+    if (!precisaResetDiario && !precisaResetSemanal) {
+        return;
     }
-  }
 
-  if (precisaResetSemanal) {
-    for (const materia of materias) {
-      materia.horasTotais = 0;
-    }
-  }
+    // === MATÉRIAS ===
+    const materias = Array.isArray(state.estudos.materias)
+        ? state.estudos.materias
+        : [];
 
-  recalcularEstudoGlobal(state);
+    // Reset das Matérias:
 
-  // === Reset das Matérias ===
-  const materias = Array.isArray(state.estudos.materias)
-    ? state.estudos.materias
-    : [];
-
-  for (const materia of materias) {
     if (precisaResetDiario) {
-      materia.horasHoje = 0;
+        for (const materia of materias) {
+            materia.horasHoje = 0;
+        }
+
+        state.estudos.ultimoReset = cicloAtual;
     }
 
     if (precisaResetSemanal) {
-      materia.horasTotais = 0;
+        for (const materia of materias) {
+            materia.horasTotais = 0;
+        }
+
+        state.estudos.ultimoResetSemanal = cicloSemanalAtual;
     }
 
-    // Salva a matéria atualizada no banco:
-    if (materia.id) {
-      await salvarEstudosAPI({
-        id: materia.id,
-        materia: materia.nome,
-        progresso: Number(materia.progresso) || 0,
-        horasHoje: Number(materia.horasHoje) || 0,
-        horasTotais: Number(materia.horasTotais) || 0,
-        ultimaAtualizacao: new Date().toISOString(),
-      });
+    // Recalcula o Global:
+    recalcularEstudoGlobal(state);
+
+    // Salva as Matérias:
+    for (const materia of materias) {
+
+        if (materia.id) {
+            await salvarEstudosAPI({
+                id: materia.id,
+                materia: materia.nome,
+                progresso: Number(materia.progresso) || 0,
+                horasHoje: Number(materia.horasHoje) || 0,
+                horasTotais: Number(materia.horasTotais) || 0,
+                ultimaAtualizacao: new Date().toISOString()
+            });
+        }
     }
-  }
 
-  // === Salva o Global ===
-  if (state.estudos.idGlobal) {
-    await salvarEstudoGlobalAPI({
-      id: state.estudos.idGlobal,
-      horasHoje: state.estudos.horasHoje,
-      horasTotais: state.estudos.horasTotais,
-      metaHorasSemanal: Number(state.estudos.metaHorasSemanal) || 0,
-      ultimoReset: state.estudos.ultimoReset,
-      ultimoResetSemanal: state.estudos.ultimoResetSemanal,
-    });
-  }
+    // Salva o Global:
+    if (state.estudos.idGlobal) {
+        await salvarEstudoGlobalAPI({
+            id: state.estudos.idGlobal,
+            horasHoje: state.estudos.horasHoje,
+            horasTotais: state.estudos.horasTotais,
+            metaHorasSemanal: Number(state.estudos.metaHorasSemanal) || 0,
+            ultimoReset: state.estudos.ultimoReset,
+            ultimoResetSemanal: state.estudos.ultimoResetSemanal
+        });
+    }
 
-  // Salva Localmente ===
-  saveSystemData(state);
+    // Salva localmente:
+    saveSystemData(state);
 }
 
 // FUNÇÃO QUE SINCRONIZA OS HORÁRIOS DE ESTUDO DIÁRIO E SEU TOTAL SEMANAL:
@@ -278,9 +279,16 @@ function recalcularEstudoGlobal(state) {
     ? state.estudos.materias
     : [];
 
+  // Soma as horas estudadas hoje de todas as matérias:
   state.estudos.horasHoje = materias.reduce(
     (total, materia) => total + (Number(materia.horasHoje) || 0),
     0,
+  );
+
+  // Soma o total semanal de todas as matérias:
+  state.estudos.horasTotais = materias.reduce(
+    (total, materia) => total + (Number(materia.horasTotais) || 0),
+    0
   );
 }
 
