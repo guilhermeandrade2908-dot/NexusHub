@@ -176,16 +176,20 @@ async function checkAndResetHorasDiarias(state) {
     // Se nenhum ciclo mudou, não faz nada:
     if (!precisaResetDiario && !precisaResetSemanal) return;
 
-    // === Reset do Estudo Global ===
+    // === Reset das Matérias ===
     if (precisaResetDiario) {
-        state.estudos.horasHoje = 0;
-        state.estudos.ultimoReset = cicloAtual;
+        for (const materia of materias) {
+            materia.horasHoje = 0;
+        }
     }
 
     if (precisaResetSemanal) {
-        state.estudos.horasTotais = 0;
-        state.estudos.ultimoResetSemanal = cicloSemanalAtual;
+        for (const materia of materias) {
+            materia.horasTotais = 0;
+        }
     }
+
+    recalcularEstudoGlobal(state);
 
     // === Reset das Matérias ===
     const materias = Array.isArray(state.estudos.materias) ? state.estudos.materias : [];
@@ -682,11 +686,12 @@ function attachEventListeners() {
                     horasTotais: materia.horasTotais,
                     ultimaAtualizacao: new Date().toISOString()
                 });
+            }
 
                 // Slava o Global:
                 if (state.estudos.idGlobal) {
                     await salvarEstudoGlobalAPI({
-                        id: state.estudos.horasHoje,
+                        id: state.estudos.idGlobal,
                         horasHoje: state.estudos.horasHoje,
                         horasTotais: state.estudos.horasTotais,
                         metaHorasSemanal: Number(state.estudos.metaHorasSemanal) || 0,
@@ -703,9 +708,8 @@ function attachEventListeners() {
                 renderSystem();
 
                 return;
-            }
-        }
     }
+}
 
     if (target.closest('#btn-edit-meta-horas')) {
         const atual = state.estudos?.metaHorasSemanal || 0;
