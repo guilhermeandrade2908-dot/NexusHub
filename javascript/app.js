@@ -620,49 +620,90 @@ function attachEventListeners() {
         
         // REDEFINIR HORAS DO DIA:
         if (opcao === '2') {
+            const materias = Array.isArray(state.estudos.materias)
+                ? state.estudos.materias
+                : [];
+
+            if (materias.length === 0) {
+                await customModal({
+                    title: 'Nenhuma matéria',
+                    message: 'Cadastre uma matéria antes de redefinir horas de estudo',
+                    isConfirm: true
+                });
+
+                return;
+            }
+
+            // Escolher a matéria:
+            const opcoesMaterias = materias.map((materia, index) => ({
+                value: String(index),
+                label: `${materia.nome} - ${Number(materia.horasHoje) || 0}h`
+            }));
+
+            const escolhaMateria = await customModal({
+                title: 'Escolher Matéria',
+                message: 'Em qual matéria você deseja redefinir as horas de hoje?',
+                options: opcoesMaterias
+            });
+
+            // Se a escolha do usuário for nula ou indefinida:
+            if (escolhaMateria === null || escolhaMateria === undefined) return;
+
+            const materia = materias[Number(escolhaMateria)];
+
+            if (!materia) return;
+
+            const horasMateriaAtual = Number(materia.horasHoje) || 0;
+
             const inputHoje = await customModal({
-                title: 'Redefinir Horas de Hoje',
-                message: 'Digite o novo valor total de horas para HOJE:',
-                defaultValue: horasHojeAntigo,
+                title: 'Redefinir horas de hoje',
+                message: `Digite o novo valor total de horas para ${materia.nome}:`,
+                defaultValue: horasMateriaAtual,
                 type: 'number'
             });
 
             const numHoje = Number(inputHoje);
 
-            if (inputHoje === null || isNaN(numHoje) || numHoje < 0) {
+            if (inputHoje === null || isNaN(numHoje) || numHoje < 0) return;
+
+            // Atualiza a matéria:
+            materia.horasHoje = numHoje;
+
+            // Recalcula o Global:
+            recalcularEstudoGlobal(state);
+
+            // Salva a matéria:
+            if (materia.id) {
+                await salvarEstudosAPI({
+                    id: materia.id,
+                    materia: materia.nome,
+                    progresso: Number(materia.progresso) || 0,
+                    horasHoje: materia.horasHoje,
+                    horasTotais: materia.horasTotais,
+                    ultimaAtualizacao: new Date().toISOString()
+                });
+
+                // Slava o Global:
+                if (state.estudos.idGlobal) {
+                    await salvarEstudoGlobalAPI({
+                        id: state.estudos.horasHoje,
+                        horasHoje: state.estudos.horasHoje,
+                        horasTotais: state.estudos.horasTotais,
+                        metaHorasSemanal: Number(state.estudos.metaHorasSemanal) || 0,
+                        ultimoReset: state.estudos.ultimoReset,
+                        ultimoResetSemanal: state.estudos.ultimoResetSemanal
+                    });
+                }
+
+                // Salva localmente:
+                saveSystemData(state);
+
+                // Recarrega do banco:
+                state = await loadSystemData();
+                renderSystem();
+
                 return;
             }
-
-            // Diferença entre o valor antigo e o novo:
-            const diff = numHoje - horasHojeAntigo;
-
-            // Atualiza o total diário global:
-            state.estudos.horasHoje = numHoje;
-
-            // Ajusta também o total semanal global:
-            const totalSemanalAntigo = Number(state.estudos.horasTotais) || 0;
-
-            state.estudos.horasTotais = Math.max(0, totalSemanalAntigo + diff);
-
-            // SALVA O GLOBAL:
-            if (state.estudos.idGlobal) {
-                await salvarEstudoGlobalAPI({
-                    id: state.estudos.idGlobal,
-                    horasHoje: state.estudos.horasHoje,
-                    horasTotais: state.estudos.horasTotais,
-                    metaHorasSemanal: Number(state.estudos.metaHorasSemanal) || 0,
-                    ultimoReset: state.estudos.ultimoReset,
-                    ultimoResetSemanal: state.estudos.ultimoResetSemanal
-                });
-            }
-
-            // Salva localmente:
-            saveSystemData(state);
-
-            // Recarreg os dados do banco:
-            state = await loadSystemData();
-            renderSystem();
-            return;
         }
     }
 
