@@ -228,6 +228,18 @@ async function checkAndResetHorasDiarias(state) {
     saveSystemData(state);
 }
 
+// FUNÇÃO QUE SINCRONIZA OS HORÁRIOS DE ESTUDO DIÁRIO E SEU TOTAL SEMANAL:
+function recalcularEstudoGlobal(state) {
+    const materias = Array.isArray(state.estudos?.materias)
+        ? state.estudos.materias
+        : [];
+
+    state.estudos.horasHoje = materias.reduce(
+        (total, materia) => total + (Number(materia.horasHoje) || 0),
+        0
+    );
+}
+
 // FUNÇÃO QUE ATUALIZA A MUDANÇA AO CLICAR EM UM ELEMENTO DA SIDEBAR:
 function switchView(viewName) {
     document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
@@ -570,12 +582,8 @@ function attachEventListeners() {
 
             materia.horasTotais = (Number(materia.horasTotais) || 0) + numAdd;
 
-            // ATUALIZA O GLOBAL:
-            state.estudos.horasHoje = horasHojeAntigo + numAdd;
-
-            const totalSemanalAntigo = Number(state.estudos.horasTotais) || 0;
-
-            state.estudos.horasTotais = totalSemanalAntigo + numAdd;
+            // RECALCULA O GLOBAL A PARTIR DAS MATÉRIAS:
+            recalcularEstudoGlobal(state);
 
             // SALVA A MATÉRIA:
             if (materia.id) {
