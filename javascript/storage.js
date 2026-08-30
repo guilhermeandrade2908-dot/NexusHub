@@ -13,12 +13,19 @@ const API_BASE_URL = 'http://localhost:5107/api';
 async function fetchAPI(endpoint) {
     try {
         const response = await fetch(`${API_BASE_URL}/${endpoint}`, {cache: 'no-store'});
+        
         if (response.ok) {
             return await response.json();
         }
+
+        console.error(`[API] Erro HTTP ${response.status} ao carregar ${endpoint}`);
+
+        return null;
+
     } catch (error) {
         console.warn(`[API Offline] Falha ao carregar ${endpoint}`, error);
     }
+
     return null;
 }
 
