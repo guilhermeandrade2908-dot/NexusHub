@@ -40,7 +40,7 @@ async function sendAPI(endpoint, method = 'GET', body = undefined) {
         });
 
         if (!response.ok) {
-            console.error(`Erro HTTP ${response.status} ao acessar ${url}`);
+            console.error(`[API] Erro HTTP ${response.status} em ${method} ${url}`);
             return null;
         }
 
@@ -49,7 +49,9 @@ async function sendAPI(endpoint, method = 'GET', body = undefined) {
         }
 
         const text = await response.text();
+
         return text ? JSON.parse(text) : true;
+    
     } catch (error) {
         console.error(`[API Offline] Falha ao enviar para ${url}`, error);
         return null;
