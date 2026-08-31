@@ -44,33 +44,63 @@ async function fetchAPI(endpoint) {
   }
 }
 
+// HELPERS DE REQUISIÇÃO (SEND API)
 async function sendAPI(endpoint, method = "GET", body = undefined) {
-  const url = `${API_BASE_URL}/${endpoint}`;
-  try {
-    const response = await fetch(url, {
-      method,
-      cache: "no-store",
-      headers:
-        body !== undefined ? { "Content-Type": "application/json" } : undefined,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
 
-    if (!response.ok) {
-      console.error(`[API] Erro HTTP ${response.status} em ${method} ${url}`);
-      return null;
+    const url = `${API_BASE_URL}/${endpoint}`;
+
+    try {
+
+        const response = await fetch(url, {
+            method,
+            cache: "no-store",
+
+            headers: body !== undefined
+                ? { "Content-Type": "application/json" }
+                : undefined,
+
+            body: body !== undefined
+                ? JSON.stringify(body)
+                : undefined
+        });
+
+        // Erro HTTP:
+        if (!response.ok) {
+
+            apiDisponivel = false;
+
+            console.error(
+                `[API] Erro HTTP ${response.status} em ${method} ${url}`
+            );
+
+            return null;
+        }
+
+        // API respondeu corretamente:
+        apiDisponivel = true;
+
+        // Resposta sem conteúdo:
+        if (response.status === 204) {
+            return true;
+        }
+
+        // Resposta com conteúdo:
+        const text = await response.text();
+
+        return text ? JSON.parse(text) : true;
+
+    } catch (error) {
+
+        // Erro de conexão:
+        apiDisponivel = false;
+
+        console.error(
+            `[API Offline] Falha ao enviar para ${url}`,
+            error
+        );
+
+        return null;
     }
-
-    if (response.status === 204) {
-      return true;
-    }
-
-    const text = await response.text();
-
-    return text ? JSON.parse(text) : true;
-  } catch (error) {
-    console.error(`[API Offline] Falha ao enviar para ${url}`, error);
-    return null;
-  }
 }
 
 // LOCALSTORAGE
