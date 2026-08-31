@@ -9,24 +9,42 @@ import { lazer as lazerInicial } from './data/lazer.js';
 const STORAGE_KEY = 'NEXUSHUB_DATA_V3';
 const API_BASE_URL = 'http://localhost:5107/api';
 
+// Variável bool que servirá para informar se a API está disponível:
+let apiDisponivel = true;
+
 // HELPERS DE REQUISIÇÃO (FETCH API)
 async function fetchAPI(endpoint) {
+    const url = `${API_BASE_URL}/${endpoint}`;
+    
     try {
-        const response = await fetch(`${API_BASE_URL}/${endpoint}`, {cache: 'no-store'});
+        const response = await fetch(url, {
+            cache: 'no-store'
+        });
         
-        if (response.ok) {
-            return await response.json();
-        }
+        // Erro HTTP:
+        if (!response.ok) {
+            apiDisponivel = false;
 
-        console.error(`[API] Erro HTTP ${response.status} ao carregar ${endpoint}`);
+        console.error(`[API] Erro HTTP ${response.status} em GET ${url}`);
 
         return null;
-
-    } catch (error) {
-        console.warn(`[API Offline] Falha ao carregar ${endpoint}`, error);
+        
     }
 
+    // API respondeu corretamente:
+    apiDisponivel = true;
+
+    return await response.json();
+
+} catch (error) {
+    // Erro de conexão:
+    apiDisponivel = false;
+    
+    console.error(`[API Offline] Falha ao carregar ${url}`, error);
+    
+    
     return null;
+    }
 }
 
 async function sendAPI(endpoint, method = 'GET', body = undefined) {
